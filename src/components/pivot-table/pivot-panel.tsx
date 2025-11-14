@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useRef, useEffect, useTransition } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -15,19 +15,33 @@ import type { PivotConfig } from '@/lib/pivot/schemas'
 import { DraggableField } from './draggable-field'
 import { DropZone } from './drop-zone'
 import { ExportDialog } from './export-dialog'
-import { Settings2, RefreshCw } from 'lucide-react'
+import { Settings2, RefreshCw, Loader2 } from 'lucide-react'
 
 interface PivotPanelProps {
-  initialConfig: PivotConfig
+  config: PivotConfig // Controlled component - no longer initialConfig
   availableFields: Array<{ name: string; type: string }>
+  onConfigChange: (config: PivotConfig) => void // Required for controlled component
 }
 
-export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) {
+export function PivotPanel({ config, availableFields, onConfigChange }: PivotPanelProps) {
   const router = useRouter()
-  const [config, setConfig] = useState(initialConfig)
+  const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
+
+  // Debounce timeout ref to prevent multiple rapid URL updates
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Filter out fields already in use
-  const getAvailableFields = () => {
+  const getAvailableFields = useCallback(() => {
     const usedFields = new Set([
       ...config.rowFields,
       ...config.columnFields,
@@ -35,42 +49,10 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
     ])
 
     return availableFields.filter(f => !usedFields.has(f.name))
-  }
+  }, [config, availableFields])
 
-  // Handle field drop into row fields
-  const handleAddRowField = (fieldName: string) => {
-    const newConfig = {
-      ...config,
-      rowFields: [...config.rowFields, fieldName],
-    }
-    setConfig(newConfig)
-    updateURL(newConfig)
-  }
-
-  // Handle field drop into column fields
-  const handleAddColumnField = (fieldName: string) => {
-    const newConfig = {
-      ...config,
-      columnFields: [...config.columnFields, fieldName],
-    }
-    setConfig(newConfig)
-    updateURL(newConfig)
-  }
-
-  // Handle field removal
-  const handleRemoveField = (field: string, zone: 'rows' | 'columns') => {
-    const newConfig = {
-      ...config,
-      [zone === 'rows' ? 'rowFields' : 'columnFields']: config[
-        zone === 'rows' ? 'rowFields' : 'columnFields'
-      ].filter(f => f !== field),
-    }
-    setConfig(newConfig)
-    updateURL(newConfig)
-  }
-
-  // Update URL to trigger server component re-render
-  const updateURL = (newConfig: PivotConfig) => {
+  // Immediate URL update (non-debounced) - used for initial load and reset
+  const updateURLImmediate = useCallback((newConfig: PivotConfig) => {
     const params = new URLSearchParams()
     if (newConfig.rowFields.length > 0) {
       params.set('rows', newConfig.rowFields.join(','))
@@ -82,17 +64,103 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
     params.set('showColumnTotals', String(newConfig.options.showColumnTotals))
     params.set('showGrandTotal', String(newConfig.options.showGrandTotal))
 
-    router.push(`/pivot?${params.toString()}`)
-  }
+    // Wrap in startTransition for loading feedback
+    startTransition(() => {
+      // Canonical Next.js pattern: pathname + query string
+      router.push(pathname + '?' + params.toString())
+    })
+  }, [router, pathname, startTransition])
+
+  // Debounced URL update - prevents freeze during rapid drag operations
+  // Only updates URL after 100ms of no changes (preserves shareable URLs)
+  const updateURLDebounced = useCallback((newConfig: PivotConfig) => {
+    // Clear any pending timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set new timeout to update URL after 100ms of inactivity
+    debounceTimeoutRef.current = setTimeout(() => {
+      updateURLImmediate(newConfig)
+    }, 100)
+  }, [updateURLImmediate])
+
+  // Handle field drop into row fields
+  const handleAddRowField = useCallback(
+    (fieldName: string, sourceZone?: 'available' | 'rows' | 'columns') => {
+      // If already in row fields (dragging within same zone), don't duplicate
+      if (sourceZone === 'rows' && config.rowFields.includes(fieldName)) {
+        return
+      }
+
+      let newConfig = { ...config }
+
+      // Remove from source zone if moving between zones
+      if (sourceZone === 'columns') {
+        newConfig.columnFields = newConfig.columnFields.filter((f) => f !== fieldName)
+      }
+
+      // Add to row fields if not already there
+      if (!newConfig.rowFields.includes(fieldName)) {
+        newConfig.rowFields = [...newConfig.rowFields, fieldName]
+      }
+
+      // Single state update - no more duplicate setConfig
+      onConfigChange(newConfig)
+      // Debounced server sync for URL updates
+      updateURLDebounced(newConfig)
+    },
+    [config, onConfigChange, updateURLDebounced]
+  )
+
+  // Handle field drop into column fields
+  const handleAddColumnField = useCallback(
+    (fieldName: string, sourceZone?: 'available' | 'rows' | 'columns') => {
+      // If already in column fields (dragging within same zone), don't duplicate
+      if (sourceZone === 'columns' && config.columnFields.includes(fieldName)) {
+        return
+      }
+
+      let newConfig = { ...config }
+
+      // Remove from source zone if moving between zones
+      if (sourceZone === 'rows') {
+        newConfig.rowFields = newConfig.rowFields.filter((f) => f !== fieldName)
+      }
+
+      // Add to column fields if not already there
+      if (!newConfig.columnFields.includes(fieldName)) {
+        newConfig.columnFields = [...newConfig.columnFields, fieldName]
+      }
+
+      // Single state update - no more duplicate setConfig
+      onConfigChange(newConfig)
+      updateURLDebounced(newConfig)
+    },
+    [config, onConfigChange, updateURLDebounced]
+  )
+
+  // Handle field removal
+  const handleRemoveField = useCallback((field: string, zone: 'rows' | 'columns') => {
+    const newConfig = {
+      ...config,
+      [zone === 'rows' ? 'rowFields' : 'columnFields']: config[
+        zone === 'rows' ? 'rowFields' : 'columnFields'
+      ].filter(f => f !== field),
+    }
+    // Single state update - no more duplicate setConfig
+    onConfigChange(newConfig)
+    updateURLDebounced(newConfig)
+  }, [config, onConfigChange, updateURLDebounced])
 
   // Reset to default configuration
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     const defaultConfig: PivotConfig = {
       rowFields: ['region'],
       columnFields: ['quarter'],
       valueFields: [
-        { field: 'sales', aggregation: 'sum', label: 'Total Sales' },
-        { field: 'units', aggregation: 'sum', label: 'Total Units' },
+        { field: 'sales', aggregation: 'sum', displayName: 'Total Sales' },
+        { field: 'units', aggregation: 'sum', displayName: 'Total Units' },
       ],
       options: {
         showRowTotals: true,
@@ -101,9 +169,14 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
         expandedByDefault: false,
       },
     }
-    setConfig(defaultConfig)
-    updateURL(defaultConfig)
-  }
+    // Single state update - no more duplicate setConfig
+    onConfigChange(defaultConfig)
+    // Cancel any pending debounced updates
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    updateURLImmediate(defaultConfig) // Immediate update for reset
+  }, [onConfigChange, updateURLImmediate])
 
   return (
     <Card>
@@ -113,9 +186,12 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
             <CardTitle className="flex items-center gap-2">
               <Settings2 className="h-5 w-5" />
               Pivot Configuration
+              {isPending && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </CardTitle>
             <CardDescription>
-              Drag fields to configure your pivot table
+              {isPending ? 'Updating pivot table...' : 'Drag fields to configure your pivot table'}
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -138,6 +214,7 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
                   key={field.name}
                   field={field.name}
                   fieldType={field.type}
+                  sourceZone="available"
                 />
               ))
             ) : (
@@ -158,6 +235,7 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
           onFieldAdd={handleAddRowField}
           onFieldRemove={(field) => handleRemoveField(field, 'rows')}
           zone="rows"
+          availableFields={availableFields}
         />
 
         <Separator />
@@ -170,6 +248,7 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
           onFieldAdd={handleAddColumnField}
           onFieldRemove={(field) => handleRemoveField(field, 'columns')}
           zone="columns"
+          availableFields={availableFields}
         />
 
         <Separator />
@@ -187,7 +266,7 @@ export function PivotPanel({ initialConfig, availableFields }: PivotPanelProps) 
                 className="flex items-center gap-2 p-3 bg-primary/5 border rounded-lg"
               >
                 <div className="flex-1">
-                  <div className="font-medium text-sm">{vf.label || vf.field}</div>
+                  <div className="font-medium text-sm">{vf.displayName || vf.field}</div>
                   <div className="text-xs text-muted-foreground">
                     Aggregation: {vf.aggregation.toUpperCase()}
                   </div>

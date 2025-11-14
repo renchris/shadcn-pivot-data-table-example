@@ -1,18 +1,25 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo } from 'react'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Hash, Calendar, Type, ToggleLeft } from 'lucide-react'
+import { Hash, Calendar, Type, ToggleLeft, X } from 'lucide-react'
 
 interface DraggableFieldProps {
   field: string
   fieldType?: string
+  sourceZone?: 'available' | 'rows' | 'columns'
   onRemove?: () => void
 }
 
-export function DraggableField({ field, fieldType = 'string', onRemove }: DraggableFieldProps) {
+const DraggableFieldComponent = ({
+  field,
+  fieldType = 'string',
+  sourceZone = 'available',
+  onRemove
+}: DraggableFieldProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -22,11 +29,11 @@ export function DraggableField({ field, fieldType = 'string', onRemove }: Dragga
 
     return draggable({
       element: el,
-      getInitialData: () => ({ field, fieldType }),
+      getInitialData: () => ({ field, fieldType, sourceZone }),
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     })
-  }, [field, fieldType])
+  }, [field, fieldType, sourceZone])
 
   const getFieldIcon = () => {
     switch (fieldType) {
@@ -42,12 +49,13 @@ export function DraggableField({ field, fieldType = 'string', onRemove }: Dragga
   }
 
   return (
-    <div ref={ref} className="inline-block">
+    <div ref={ref} className="inline-block relative group">
       <Badge
         variant="outline"
         className={cn(
           'cursor-move select-none transition-all hover:bg-accent',
-          isDragging && 'opacity-50 cursor-grabbing'
+          isDragging && 'opacity-50 cursor-grabbing',
+          sourceZone !== 'available' && 'pr-6'
         )}
       >
         <span className="flex items-center gap-1.5">
@@ -55,6 +63,19 @@ export function DraggableField({ field, fieldType = 'string', onRemove }: Dragga
           <span className="font-medium">{formatFieldName(field)}</span>
         </span>
       </Badge>
+      {sourceZone !== 'available' && onRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-background hover:bg-destructive hover:text-destructive-foreground"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -68,3 +89,9 @@ function formatFieldName(field: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ')
 }
+
+/**
+ * Memoized DraggableField component to prevent unnecessary re-renders
+ * Only re-renders when field, fieldType, sourceZone, or onRemove changes
+ */
+export const DraggableField = memo(DraggableFieldComponent)

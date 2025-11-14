@@ -1,29 +1,29 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo, useMemo } from 'react'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { DraggableField } from './draggable-field'
 import { cn } from '@/lib/utils'
-import { X } from 'lucide-react'
 
 interface DropZoneProps {
   label: string
   description?: string
   fields: string[]
-  onFieldAdd: (field: string) => void
+  onFieldAdd: (field: string, sourceZone?: 'available' | 'rows' | 'columns') => void
   onFieldRemove: (field: string) => void
   zone: 'rows' | 'columns'
+  availableFields: Array<{ name: string; type: string }>
 }
 
-export function DropZone({
+const DropZoneComponent = ({
   label,
   description,
   fields,
   onFieldAdd,
   onFieldRemove,
   zone,
-}: DropZoneProps) {
+  availableFields,
+}: DropZoneProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [isDraggedOver, setIsDraggedOver] = useState(false)
 
@@ -37,13 +37,25 @@ export function DropZone({
       onDragLeave: () => setIsDraggedOver(false),
       onDrop: ({ source }) => {
         setIsDraggedOver(false)
-        const data = source.data as { field: string; fieldType?: string }
+        const data = source.data as {
+          field: string
+          fieldType?: string
+          sourceZone?: 'available' | 'rows' | 'columns'
+        }
         if (data.field) {
-          onFieldAdd(data.field)
+          onFieldAdd(data.field, data.sourceZone)
         }
       },
     })
   }, [onFieldAdd])
+
+  // Memoize field type lookup to prevent unnecessary recalculations
+  const getFieldType = useMemo(() => {
+    return (fieldName: string): string => {
+      const fieldInfo = availableFields.find((f) => f.name === fieldName)
+      return fieldInfo?.type || 'string'
+    }
+  }, [availableFields])
 
   return (
     <div>
@@ -64,22 +76,13 @@ export function DropZone({
         {fields.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {fields.map((field, index) => (
-              <Badge
+              <DraggableField
                 key={`${field}-${index}`}
-                variant="secondary"
-                className="pl-3 pr-1 py-1.5 text-sm font-medium"
-              >
-                <span>{formatFieldName(field)}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-2 hover:bg-destructive/20"
-                  onClick={() => onFieldRemove(field)}
-                >
-                  <X className="h-3 w-3" />
-                  <span className="sr-only">Remove {field}</span>
-                </Button>
-              </Badge>
+                field={field}
+                fieldType={getFieldType(field)}
+                sourceZone={zone}
+                onRemove={() => onFieldRemove(field)}
+              />
             ))}
           </div>
         ) : (
@@ -93,11 +96,7 @@ export function DropZone({
 }
 
 /**
- * Format field name for display
+ * Memoized DropZone component to prevent unnecessary re-renders
+ * Only re-renders when props change (label, description, fields, handlers, zone, availableFields)
  */
-function formatFieldName(field: string): string {
-  return field
-    .split(/(?=[A-Z])|_/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
+export const DropZone = memo(DropZoneComponent)
