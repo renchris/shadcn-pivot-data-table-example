@@ -53,7 +53,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
                 level > 0 && `pl-${level * 4}`
               )}
             >
-              {value}
+              {formatTotalLabel(value)}
             </div>
           )
         },
@@ -313,6 +313,17 @@ function formatFieldName(field: string): string {
     .split(/(?=[A-Z])|_/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ')
+}
+
+/**
+ * Format total labels for display
+ * Replaces internal __TOTAL__ markers with user-friendly text
+ */
+function formatTotalLabel(value: string): string {
+  if (value === '__TOTAL__') return 'Total'
+  if (value === '__COLUMN_TOTAL__') return 'Column Total'
+  if (value === '__GRAND_TOTAL__') return 'Grand Total'
+  return value
 }
 
 /**

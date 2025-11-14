@@ -1,11 +1,19 @@
 'use client'
 
 import { useEffect, useRef, useState, memo } from 'react'
+import { createPortal } from 'react-dom'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
+import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Hash, Calendar, Type, ToggleLeft, X } from 'lucide-react'
+
+type DragState =
+  | { type: 'idle' }
+  | { type: 'preview'; container: HTMLElement }
+  | { type: 'dragging' }
 
 interface DraggableFieldProps {
   field: string
@@ -21,7 +29,7 @@ const DraggableFieldComponent = ({
   onRemove
 }: DraggableFieldProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [dragState, setDragState] = useState<DragState>({ type: 'idle' })
 
   useEffect(() => {
     const el = ref.current
@@ -30,8 +38,25 @@ const DraggableFieldComponent = ({
     return draggable({
       element: el,
       getInitialData: () => ({ field, fieldType, sourceZone }),
-      onDragStart: () => setIsDragging(true),
-      onDrop: () => setIsDragging(false),
+      onGenerateDragPreview({ nativeSetDragImage, location, source }) {
+        setCustomNativeDragPreview({
+          nativeSetDragImage,
+          getOffset: preserveOffsetOnSource({
+            element: source.element,
+            input: location.current.input,
+          }),
+          render({ container }) {
+            setDragState({ type: 'preview', container })
+            return () => setDragState({ type: 'dragging' })
+          },
+        })
+      },
+      onDragStart() {
+        setDragState({ type: 'dragging' })
+      },
+      onDrop() {
+        setDragState({ type: 'idle' })
+      },
     })
   }, [field, fieldType, sourceZone])
 
@@ -49,34 +74,47 @@ const DraggableFieldComponent = ({
   }
 
   return (
-    <div ref={ref} className="inline-block relative group">
-      <Badge
-        variant="outline"
-        className={cn(
-          'cursor-move select-none transition-all hover:bg-accent',
-          isDragging && 'opacity-50 cursor-grabbing',
-          sourceZone !== 'available' && 'pr-6'
-        )}
-      >
-        <span className="flex items-center gap-1.5">
-          {getFieldIcon()}
-          <span className="font-medium">{formatFieldName(field)}</span>
-        </span>
-      </Badge>
-      {sourceZone !== 'available' && onRemove && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-background hover:bg-destructive hover:text-destructive-foreground"
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
-          }}
+    <>
+      <div ref={ref} className="inline-block group">
+        <Badge
+          variant="outline"
+          className={cn(
+            'cursor-move select-none transition-all hover:bg-accent gap-1',
+            dragState.type === 'dragging' && 'opacity-50 cursor-grabbing'
+          )}
         >
-          <X className="h-3 w-3" />
-        </Button>
-      )}
-    </div>
+          <span className="flex items-center gap-1.5">
+            {getFieldIcon()}
+            <span className="font-medium">{formatFieldName(field)}</span>
+          </span>
+          {sourceZone !== 'available' && onRemove && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-3 w-3 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation()
+                onRemove()
+              }}
+            >
+              <X className="h-2.5 w-2.5" />
+            </Button>
+          )}
+        </Badge>
+      </div>
+
+      {/* Render preview via portal - clean Badge without wrapper div */}
+      {dragState.type === 'preview' &&
+        createPortal(
+          <Badge variant="outline" className="cursor-grabbing gap-1">
+            <span className="flex items-center gap-1.5">
+              {getFieldIcon()}
+              <span className="font-medium">{formatFieldName(field)}</span>
+            </span>
+          </Badge>,
+          dragState.container
+        )}
+    </>
   )
 }
 
