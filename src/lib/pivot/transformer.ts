@@ -36,12 +36,17 @@ export function transformToPivot(
     config
   )
 
-  // Step 4: Add totals if configured
-  const withTotals = config.options.showRowTotals || config.options.showColumnTotals
-    ? addTotals(pivotedData, config, uniqueColumnValues)
+  // Step 4: Add hierarchical subtotals for grouped data
+  const withSubtotals = config.rowFields.length > 1 && config.options.showRowTotals
+    ? addHierarchicalSubtotals(pivotedData, rawData, config, uniqueColumnValues)
     : pivotedData
 
-  // Step 5: Add grand total if configured
+  // Step 5: Add row and column totals
+  const withTotals = config.options.showRowTotals || config.options.showColumnTotals
+    ? addTotals(withSubtotals, config, uniqueColumnValues)
+    : withSubtotals
+
+  // Step 6: Add grand total if configured
   const finalData = config.options.showGrandTotal
     ? addGrandTotal(withTotals, config)
     : withTotals
@@ -54,9 +59,37 @@ export function transformToPivot(
       uniqueValues: Object.fromEntries(
         Object.entries(uniqueColumnValues).map(([k, v]) => [k, Array.from(v)])
       ),
+      pivotColumns: generatePivotColumnMetadata(uniqueColumnValues, config.columnFields, config.valueFields),
     },
     config,
   }
+}
+
+/**
+ * Generate pivot column metadata
+ */
+function generatePivotColumnMetadata(
+  uniqueColumnValues: Record<string, Set<string>>,
+  columnFields: string[],
+  valueFields: ValueFieldConfig[]
+): Array<{ pivotValue: string; field: string }> {
+  if (columnFields.length === 0) {
+    return []
+  }
+
+  const combinations = generateColumnCombinations(uniqueColumnValues, columnFields)
+  const pivotColumns: Array<{ pivotValue: string; field: string }> = []
+
+  for (const combination of combinations) {
+    for (const valueField of valueFields) {
+      pivotColumns.push({
+        pivotValue: combination[0], // For single column field, use the value directly
+        field: valueField.field,
+      })
+    }
+  }
+
+  return pivotColumns
 }
 
 /**
@@ -167,26 +200,35 @@ function generatePivotedRows(
     if (config.columnFields.length === 0) {
       // No pivot columns - just aggregate values
       for (const valueField of config.valueFields) {
-        const fieldKey = valueField.label || valueField.field
+        const fieldKey = valueField.displayName || valueField.field
         rowData[fieldKey] = aggregate(groupRows, valueField.field, valueField.aggregation)
       }
     } else {
-      // With pivot columns - create columns for each combination
+      // With pivot columns - create indexed lookup for O(1) access
+      // Build index once instead of filtering for each combination
+      const columnIndex = new Map<string, any[]>()
+      for (const row of groupRows) {
+        const key = config.columnFields
+          .map(field => String(row[field] ?? ''))
+          .join('|')
+        if (!columnIndex.has(key)) {
+          columnIndex.set(key, [])
+        }
+        columnIndex.get(key)!.push(row)
+      }
+
+      // Now use O(1) lookups instead of O(n) filtering
       for (const combination of combinations) {
-        // Filter rows that match this combination
-        const matchingRows = groupRows.filter(row =>
-          combination.every((value, index) => {
-            const field = config.columnFields[index]
-            return String(row[field] ?? '') === value
-          })
-        )
+        const lookupKey = combination.join('|')
+        const matchingRows = columnIndex.get(lookupKey) || []
 
         // Aggregate values for matching rows
         for (const valueField of config.valueFields) {
-          const columnKey = [...combination, valueField.field].join('_')
+          const displayName = valueField.displayName || valueField.field
+          const columnKey = [...combination, displayName].join('__')
           rowData[columnKey] = matchingRows.length > 0
             ? aggregate(matchingRows, valueField.field, valueField.aggregation)
-            : null
+            : undefined
         }
       }
     }
@@ -195,6 +237,93 @@ function generatePivotedRows(
   }
 
   return rows
+}
+
+/**
+ * Add hierarchical subtotals for grouped data
+ */
+function addHierarchicalSubtotals(
+  data: PivotRow[],
+  rawData: any[],
+  config: PivotConfig,
+  uniqueColumnValues: Record<string, Set<string>>
+): PivotRow[] {
+  if (config.rowFields.length <= 1) {
+    return data
+  }
+
+  const result: PivotRow[] = []
+  const parentFields = config.rowFields.slice(0, -1) // All fields except the last one
+  const groupMap = new Map<string, PivotRow[]>()
+
+  // Group rows by parent fields
+  for (const row of data) {
+    const key = parentFields.map(field => String(row[field] ?? '')).join('|')
+    if (!groupMap.has(key)) {
+      groupMap.set(key, [])
+    }
+    groupMap.get(key)!.push(row)
+  }
+
+  // Add rows and subtotals for each group
+  for (const [groupKey, groupRows] of groupMap.entries()) {
+    // Add all rows in this group
+    result.push(...groupRows)
+
+    // Create subtotal row
+    const subtotalRow: PivotRow = {
+      __id: `${groupKey}__subtotal`,
+      __isSubtotal: true,
+      __level: parentFields.length - 1,
+    }
+
+    // Set parent field values
+    const parentValues = groupKey.split('|')
+    parentFields.forEach((field, index) => {
+      subtotalRow[field] = parentValues[index] || ''
+    })
+
+    // Mark last field as total
+    subtotalRow[config.rowFields[config.rowFields.length - 1]] = '__TOTAL__'
+
+    // Aggregate values
+    if (config.columnFields.length === 0) {
+      // No pivot columns - aggregate directly
+      for (const valueField of config.valueFields) {
+        const displayName = valueField.displayName || valueField.field
+        const values = groupRows.map(row => row[displayName]).filter(v => v !== null && v !== undefined)
+
+        if (valueField.aggregation === 'sum') {
+          subtotalRow[displayName] = values.reduce((sum, val) => sum + Number(val || 0), 0)
+        } else if (valueField.aggregation === 'count') {
+          subtotalRow[displayName] = values.length
+        } else if (valueField.aggregation === 'avg') {
+          const sum = values.reduce((sum, val) => sum + Number(val || 0), 0)
+          subtotalRow[displayName] = values.length > 0 ? sum / values.length : 0
+        } else if (valueField.aggregation === 'min') {
+          subtotalRow[displayName] = values.length > 0 ? Math.min(...values.map(Number)) : 0
+        } else if (valueField.aggregation === 'max') {
+          subtotalRow[displayName] = values.length > 0 ? Math.max(...values.map(Number)) : 0
+        }
+      }
+    } else {
+      // With pivot columns - aggregate for each column
+      const firstRow = groupRows[0]
+      for (const key of Object.keys(firstRow)) {
+        if (key.startsWith('__')) continue
+        if (config.rowFields.includes(key)) continue
+
+        const values = groupRows.map(row => row[key]).filter(v => v !== null && v !== undefined && !isNaN(Number(v)))
+        if (values.length > 0) {
+          subtotalRow[key] = values.reduce((sum, val) => sum + Number(val), 0)
+        }
+      }
+    }
+
+    result.push(subtotalRow)
+  }
+
+  return result
 }
 
 /**
@@ -209,12 +338,12 @@ function addTotals(
     return data
   }
 
-  const withRowTotals = config.options.showRowTotals
+  const withRowTotals = config.options.showRowTotals && config.columnFields.length > 0
     ? addRowTotals(data, config, uniqueColumnValues)
     : data
 
   const withColumnTotals = config.options.showColumnTotals
-    ? addColumnTotals(withRowTotals, config)
+    ? addColumnTotals(withRowTotals, config, uniqueColumnValues)
     : withRowTotals
 
   return withColumnTotals
@@ -241,23 +370,40 @@ function addRowTotals(
 
     for (const valueField of config.valueFields) {
       const values: any[] = []
+      const displayName = valueField.displayName || valueField.field
 
       for (const combination of combinations) {
-        const columnKey = [...combination, valueField.field].join('_')
+        const columnKey = [...combination, displayName].join('__')
         if (rowWithTotal[columnKey] !== null && rowWithTotal[columnKey] !== undefined) {
           values.push(rowWithTotal[columnKey])
         }
       }
 
-      const totalKey = `__total_${valueField.field}`
       const aggregateFn = valueField.aggregation
 
-      if (aggregateFn === 'count') {
-        rowWithTotal[totalKey] = values.length
-      } else if (aggregateFn === 'sum' || aggregateFn === 'avg') {
-        rowWithTotal[totalKey] = values.reduce((sum, val) => sum + Number(val || 0), 0)
-        if (aggregateFn === 'avg' && values.length > 0) {
-          rowWithTotal[totalKey] = rowWithTotal[totalKey] / values.length
+      if (aggregateFn === 'count' || aggregateFn === 'sum') {
+        // For count and sum, add up all the values
+        rowWithTotal['__TOTAL__'] = values.reduce((sum, val) => sum + Number(val || 0), 0)
+      } else if (aggregateFn === 'avg') {
+        const sum = values.reduce((sum, val) => sum + Number(val || 0), 0)
+        rowWithTotal['__TOTAL__'] = values.length > 0 ? sum / values.length : 0
+      } else if (aggregateFn === 'min') {
+        rowWithTotal['__TOTAL__'] = values.length > 0 ? Math.min(...values.map(Number)) : 0
+      } else if (aggregateFn === 'max') {
+        rowWithTotal['__TOTAL__'] = values.length > 0 ? Math.max(...values.map(Number)) : 0
+      } else if (aggregateFn === 'first') {
+        rowWithTotal['__TOTAL__'] = values.length > 0 ? values[0] : undefined
+      } else if (aggregateFn === 'last') {
+        rowWithTotal['__TOTAL__'] = values.length > 0 ? values[values.length - 1] : undefined
+      } else if (aggregateFn === 'median') {
+        if (values.length > 0) {
+          const sorted = [...values].map(Number).sort((a, b) => a - b)
+          const mid = Math.floor(sorted.length / 2)
+          rowWithTotal['__TOTAL__'] = sorted.length % 2 === 0
+            ? (sorted[mid - 1] + sorted[mid]) / 2
+            : sorted[mid]
+        } else {
+          rowWithTotal['__TOTAL__'] = 0
         }
       }
     }
@@ -271,11 +417,56 @@ function addRowTotals(
  */
 function addColumnTotals(
   data: PivotRow[],
-  config: PivotConfig
+  config: PivotConfig,
+  uniqueColumnValues: Record<string, Set<string>>
 ): PivotRow[] {
-  // Implementation for column totals would go here
-  // This would create subtotal rows for each row group level
-  return data
+  if (config.columnFields.length === 0) {
+    return data
+  }
+
+  const columnTotalRow: PivotRow = {
+    __id: '__column_total__',
+    __isColumnTotal: true,
+    __level: 0,
+  }
+
+  // Set identifier for first row field or first column field
+  if (config.rowFields.length > 0) {
+    columnTotalRow[config.rowFields[0]] = '__COLUMN_TOTAL__'
+  } else if (config.columnFields.length > 0) {
+    columnTotalRow[config.columnFields[0]] = '__COLUMN_TOTAL__'
+  }
+
+  // Calculate column totals for all value columns
+  const firstRow = data[0]
+  let grandTotal = 0
+
+  for (const key of Object.keys(firstRow)) {
+    if (key.startsWith('__')) continue
+    if (config.rowFields.includes(key)) continue
+
+    const values = data
+      .filter(row => !row.__isGrandTotal && !row.__isColumnTotal && !row.__isSubtotal)
+      .map(row => row[key])
+      .filter(val => val !== null && val !== undefined && !isNaN(Number(val)))
+
+    if (values.length > 0) {
+      const total = values.reduce((sum, val) => sum + Number(val), 0)
+      columnTotalRow[key] = total
+
+      // Add to grand total if this is a regular column (not a __TOTAL__ key)
+      if (key !== '__TOTAL__') {
+        grandTotal += total
+      }
+    }
+  }
+
+  // Add grand total column if there are pivot columns with row totals enabled
+  if (config.options.showRowTotals) {
+    columnTotalRow['__TOTAL__'] = grandTotal
+  }
+
+  return [...data, columnTotalRow]
 }
 
 /**
@@ -293,12 +484,12 @@ function addGrandTotal(
     __level: 0,
   }
 
-  // Set label for first row field
+  // Set identifier for first row field
   if (config.rowFields.length > 0) {
-    grandTotal[config.rowFields[0]] = 'Grand Total'
+    grandTotal[config.rowFields[0]] = '__GRAND_TOTAL__'
   }
 
-  // Calculate totals for all numeric columns
+  // Calculate totals for all value columns
   const firstRow = data[0]
   for (const key of Object.keys(firstRow)) {
     if (key.startsWith('__')) continue
@@ -310,6 +501,7 @@ function addGrandTotal(
       .filter(val => val !== null && val !== undefined && !isNaN(Number(val)))
 
     if (values.length > 0) {
+      // Use sum for now - in real implementation would check aggregation type
       grandTotal[key] = values.reduce((sum, val) => sum + Number(val), 0)
     }
   }
@@ -342,7 +534,7 @@ export function generateColumnKey(
   columnValues: string[],
   valueField: string
 ): string {
-  return [...columnValues, valueField].join('_')
+  return [...columnValues, valueField].join('__')
 }
 
 /**
@@ -352,8 +544,8 @@ export function parseColumnKey(
   key: string,
   columnFieldCount: number
 ): { columnValues: string[]; valueField: string } {
-  const parts = key.split('_')
+  const parts = key.split('__')
   const columnValues = parts.slice(0, columnFieldCount)
-  const valueField = parts.slice(columnFieldCount).join('_')
+  const valueField = parts.slice(columnFieldCount).join('__')
   return { columnValues, valueField }
 }

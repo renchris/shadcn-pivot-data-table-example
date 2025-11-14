@@ -13,12 +13,12 @@ import {
  * Execute pivot transformation
  * Cached for 1 hour to improve performance
  */
-export const executePivot = cache(async (config: unknown): Promise<PivotResult> => {
+export const executePivot = cache(async (config: unknown, scenario?: string): Promise<PivotResult> => {
   // Validate configuration
   const validatedConfig = PivotConfigSchema.parse(config)
 
   // Fetch data (in production, this would come from your database/API)
-  const rawData = await fetchDataSource()
+  const rawData = await fetchDataSource(scenario)
 
   // Transform to pivot
   const result = transformToPivot(rawData, validatedConfig)
@@ -27,22 +27,49 @@ export const executePivot = cache(async (config: unknown): Promise<PivotResult> 
 })
 
 /**
- * Fetch data from source
- * This is a placeholder - replace with your actual data fetching logic
+ * Fetch raw data without transformation (for client-side pivoting)
+ * This enables instant AG Grid-like performance
  */
-async function fetchDataSource(): Promise<any[]> {
-  // OPTION A: Fetch from external API
-  // const response = await fetch('https://your-api.com/data', {
-  //   headers: { 'Authorization': `Bearer ${process.env.API_KEY}` }
-  // })
-  // return response.json()
+export async function fetchRawData(scenario?: string): Promise<any[]> {
+  return fetchDataSource(scenario)
+}
 
-  // OPTION B: Fetch from database
-  // const { db } = await import('@/lib/db')
-  // return db.sales.findMany()
+/**
+ * Fetch data from source
+ * Routes to appropriate dataset based on scenario
+ */
+async function fetchDataSource(scenario?: string): Promise<any[]> {
+  // Route to scenario-specific test fixtures
+  switch (scenario) {
+    case 'market-data': {
+      const { marketData } = await import('@/__tests__/fixtures/market-data')
+      return marketData
+    }
 
-  // OPTION C: Use sample data (for development)
-  return generateSampleData()
+    case 'trading-pnl': {
+      const { tradingData } = await import('@/__tests__/fixtures/trading-data')
+      return tradingData
+    }
+
+    case 'bond-portfolio': {
+      const { bondData } = await import('@/__tests__/fixtures/bond-data')
+      return bondData
+    }
+
+    case 'options-greeks': {
+      const { optionsData } = await import('@/__tests__/fixtures/options-data')
+      return optionsData
+    }
+
+    case 'risk-var': {
+      const { riskData } = await import('@/__tests__/fixtures/risk-data')
+      return riskData
+    }
+
+    default:
+      // Fallback to sample data for development
+      return generateSampleData()
+  }
 }
 
 /**
@@ -225,8 +252,8 @@ export async function getUniqueFieldValues(field: string): Promise<string[]> {
  * Get available fields from the data source
  * Returns field names and their types
  */
-export async function getAvailableFields(): Promise<Array<{ name: string; type: string }>> {
-  const data = await fetchDataSource()
+export async function getAvailableFields(scenario?: string): Promise<Array<{ name: string; type: string }>> {
+  const data = await fetchDataSource(scenario)
 
   if (data.length === 0) {
     return []

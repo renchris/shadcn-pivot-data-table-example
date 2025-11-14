@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, memo } from 'react'
 import {
   type ColumnDef,
   flexRender,
@@ -27,7 +27,7 @@ interface PivotTableProps {
   metadata: PivotMetadata
 }
 
-export function PivotTable({ data, config, metadata }: PivotTableProps) {
+const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
   const parentRef = useRef<HTMLDivElement>(null)
 
   // Generate column definitions dynamically based on configuration
@@ -67,8 +67,8 @@ export function PivotTable({ data, config, metadata }: PivotTableProps) {
       for (const valueField of config.valueFields) {
         cols.push({
           id: valueField.field,
-          accessorKey: valueField.field,
-          header: valueField.label || formatFieldName(valueField.field),
+          accessorKey: valueField.displayName || valueField.field,
+          header: valueField.displayName || formatFieldName(valueField.field),
           cell: ({ getValue }) => {
             const value = getValue() as number
             return (
@@ -90,9 +90,9 @@ export function PivotTable({ data, config, metadata }: PivotTableProps) {
 
         // Create column group
         const groupColumns: ColumnDef<PivotRow>[] = config.valueFields.map(valueField => ({
-          id: generateColumnKey(combination, valueField.field),
-          accessorKey: generateColumnKey(combination, valueField.field),
-          header: valueField.label || formatFieldName(valueField.field),
+          id: generateColumnKey(combination, valueField.displayName || valueField.field),
+          accessorKey: generateColumnKey(combination, valueField.displayName || valueField.field),
+          header: valueField.displayName || formatFieldName(valueField.field),
           cell: ({ getValue, row }) => {
             const value = getValue() as number
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
@@ -132,7 +132,7 @@ export function PivotTable({ data, config, metadata }: PivotTableProps) {
         cols.push({
           id: `__total_${valueField.field}`,
           accessorKey: `__total_${valueField.field}`,
-          header: `Total ${valueField.label || formatFieldName(valueField.field)}`,
+          header: `Total ${valueField.displayName || formatFieldName(valueField.field)}`,
           cell: ({ getValue, row }) => {
             const value = getValue() as number
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
@@ -264,6 +264,18 @@ export function PivotTable({ data, config, metadata }: PivotTableProps) {
     </div>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const PivotTable = memo(PivotTableComponent, (prevProps, nextProps) => {
+  // Deep equality check for data and config
+  return (
+    prevProps.data === nextProps.data &&
+    prevProps.metadata === nextProps.metadata &&
+    JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config)
+  )
+})
+
+PivotTable.displayName = 'PivotTable'
 
 /**
  * Generate all combinations of column values

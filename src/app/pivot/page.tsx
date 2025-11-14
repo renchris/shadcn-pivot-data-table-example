@@ -1,10 +1,11 @@
 import { Suspense } from 'react'
-import { executePivot, getAvailableFields } from '@/app/actions/pivot'
+import { fetchRawData, getAvailableFields } from '@/app/actions/pivot'
 import { PivotConfigSchema, type PivotConfig } from '@/lib/pivot/schemas'
-import { PivotTable } from '@/components/pivot-table/pivot-table'
-import { PivotPanel } from '@/components/pivot-table/pivot-panel'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScenarioSelector } from '@/components/pivot-table/scenario-selector'
+import { ClientPivotWrapper } from '@/components/pivot-table/client-pivot-wrapper'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { getScenario } from '@/lib/pivot/scenarios'
 
 /**
  * Main Pivot Table Page (Server Component)
@@ -13,29 +14,27 @@ import { Skeleton } from '@/components/ui/skeleton'
 export default async function PivotPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  // Parse configuration from URL parameters
+  // Await searchParams as it's now a Promise in Next.js 15+
+  const params = await searchParams
+
+  // Get selected scenario from URL or use default
+  // Note: No server-side redirect here to avoid competing with client-side router.push()
+  // The ScenarioSelector component handles initial navigation on mount
+  const scenarioId = typeof params.scenario === 'string' ? params.scenario : null
+  const scenario = getScenario(scenarioId)
+
+  // Use scenario's default config as base, allow URL params to override
   const config: PivotConfig = {
-    rowFields: parseStringArray(searchParams.rows) || ['region'],
-    columnFields: parseStringArray(searchParams.columns) || ['quarter'],
-    valueFields: [
-      {
-        field: 'sales',
-        aggregation: 'sum',
-        label: 'Total Sales',
-      },
-      {
-        field: 'units',
-        aggregation: 'sum',
-        label: 'Total Units',
-      },
-    ],
+    rowFields: parseStringArray(params.rows) || scenario.defaultConfig.rowFields,
+    columnFields: parseStringArray(params.columns) || scenario.defaultConfig.columnFields,
+    valueFields: scenario.defaultConfig.valueFields, // Use scenario's value fields
     options: {
-      showRowTotals: parseBoolean(searchParams.showRowTotals, true),
-      showColumnTotals: parseBoolean(searchParams.showColumnTotals, true),
-      showGrandTotal: parseBoolean(searchParams.showGrandTotal, true),
-      expandedByDefault: parseBoolean(searchParams.expanded, false),
+      showRowTotals: parseBoolean(params.showRowTotals, scenario.defaultConfig.options.showRowTotals),
+      showColumnTotals: parseBoolean(params.showColumnTotals, scenario.defaultConfig.options.showColumnTotals),
+      showGrandTotal: parseBoolean(params.showGrandTotal, scenario.defaultConfig.options.showGrandTotal),
+      expandedByDefault: parseBoolean(params.expanded, false),
     },
   }
 
@@ -52,46 +51,46 @@ export default async function PivotPage({
         </p>
       </div>
 
-      {/* Configuration Panel */}
-      <Suspense fallback={<PivotPanelSkeleton />}>
-        <PivotPanelWrapper config={validatedConfig} />
-      </Suspense>
+      {/* Scenario Selector */}
+      <ScenarioSelector />
 
-      {/* Pivot Table */}
-      <Suspense fallback={<PivotTableSkeleton />}>
-        <PivotDataFetcher config={validatedConfig} />
+      {/* Client-Side Pivot Table with Instant Transformations */}
+      <Suspense fallback={<PivotLoadingSkeleton />}>
+        <ClientPivotDataFetcher config={validatedConfig} scenario={scenario.id} />
       </Suspense>
     </div>
   )
 }
 
 /**
- * Wrapper component for pivot panel to handle async data fetching
+ * Async component to fetch raw data and available fields for client-side pivoting
+ * This enables AG Grid-level instant performance (50-80ms)
  */
-async function PivotPanelWrapper({ config }: { config: PivotConfig }) {
-  const availableFields = await getAvailableFields()
+async function ClientPivotDataFetcher({ config, scenario }: { config: PivotConfig; scenario: string }) {
+  // Fetch raw data and fields in parallel for faster load
+  const [rawData, availableFields] = await Promise.all([
+    fetchRawData(scenario),
+    getAvailableFields(scenario),
+  ])
 
-  return <PivotPanel initialConfig={config} availableFields={availableFields} />
+  return (
+    <ClientPivotWrapper
+      rawData={rawData}
+      initialConfig={config}
+      availableFields={availableFields}
+    />
+  )
 }
 
 /**
- * Async component to fetch and display pivoted data
+ * Loading skeleton for entire pivot page
  */
-async function PivotDataFetcher({ config }: { config: PivotConfig }) {
-  const result = await executePivot(config)
-
+function PivotLoadingSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Results</CardTitle>
-        <CardDescription>
-          {result.metadata.rowCount} rows × {result.metadata.columnCount} columns
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <PivotTable data={result.data} config={config} metadata={result.metadata} />
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <PivotPanelSkeleton />
+      <PivotTableSkeleton />
+    </div>
   )
 }
 

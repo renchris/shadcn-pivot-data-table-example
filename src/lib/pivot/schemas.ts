@@ -22,7 +22,7 @@ export type AggregationFunction = z.infer<typeof AggregationFunctionSchema>
 export const ValueFieldConfigSchema = z.object({
   field: z.string(),
   aggregation: AggregationFunctionSchema,
-  label: z.string().optional(),
+  displayName: z.string().optional(),
 })
 
 export type ValueFieldConfig = z.infer<typeof ValueFieldConfigSchema>
