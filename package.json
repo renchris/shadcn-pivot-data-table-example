@@ -1,6 +1,6 @@
 {
   "name": "shadcn-pivot-data-table-example",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Enterprise-grade pivot table built with Shadcn Data Table, TanStack Table v8, and Next.js 16 App Router",
   "author": "Chris Ren",
