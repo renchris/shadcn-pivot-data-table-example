@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { cn } from '../../lib/utils'
 import { Hash, Calendar, Type, ToggleLeft, X } from 'lucide-react'
 
 type DragState =

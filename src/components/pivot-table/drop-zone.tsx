@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, memo, useMemo } from 'react'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { DraggableField } from './draggable-field'
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 
 interface DropZoneProps {
   label: string

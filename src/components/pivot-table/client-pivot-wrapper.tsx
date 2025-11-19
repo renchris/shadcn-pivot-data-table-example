@@ -1,11 +1,11 @@
 'use client'
 
 import { useMemo, useState, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { PivotTable } from './pivot-table'
 import { PivotPanel } from './pivot-panel'
-import { transformToPivot } from '@/lib/pivot/transformer'
-import type { PivotConfig } from '@/lib/pivot/schemas'
+import { transformToPivot } from '../../lib/pivot/transformer'
+import type { PivotConfig } from '../../lib/pivot/schemas'
 
 interface ClientPivotWrapperProps {
   rawData: any[]

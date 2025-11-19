@@ -15,18 +15,42 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import type { PivotConfig, PivotMetadata } from '@/lib/pivot/schemas'
-import type { PivotRow } from '@/lib/pivot/types'
-import { cn } from '@/lib/utils'
-import { generateColumnKey } from '@/lib/pivot/transformer'
+} from '../ui/table'
+import type { PivotConfig, PivotMetadata } from '../../lib/pivot/schemas'
+import type { PivotRow } from '../../lib/pivot/types'
+import { cn } from '../../lib/utils'
+import { generateColumnKey } from '../../lib/pivot/transformer'
 
+/**
+ * Props for the PivotTable component
+ */
 interface PivotTableProps {
+  /** Transformed pivot data rows */
   data: PivotRow[]
+  /** Pivot configuration used for the transformation */
   config: PivotConfig
+  /** Metadata about the pivot result (row count, column count, unique values) */
   metadata: PivotMetadata
 }
 
+/**
+ * PivotTable component - Renders a virtualized pivot table with TanStack Table
+ *
+ * Features:
+ * - Virtual scrolling for large datasets (100K+ rows)
+ * - Dynamic column generation based on pivot configuration
+ * - Hierarchical row grouping with indentation
+ * - Styled subtotals and grand totals
+ *
+ * @example
+ * ```tsx
+ * import { transformToPivot } from 'shadcn-pivot-table'
+ * import { PivotTable } from 'shadcn-pivot-table'
+ *
+ * const result = transformToPivot(rawData, config)
+ * <PivotTable data={result.data} config={result.config} metadata={result.metadata} />
+ * ```
+ */
 const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
   const parentRef = useRef<HTMLDivElement>(null)
 

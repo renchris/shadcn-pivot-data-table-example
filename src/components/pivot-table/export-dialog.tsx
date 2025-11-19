@@ -9,15 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+} from '../ui/dialog'
+import { Button } from '../ui/button'
+import { Label } from '../ui/label'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Download, Loader2 } from 'lucide-react'
-import { exportPivot } from '@/app/actions/pivot'
-import type { ExportFormat } from '@/lib/pivot/schemas'
+import { exportPivotData } from '../../lib/pivot/export'
+import type { ExportFormat } from '../../lib/pivot/schemas'
 
-export function ExportDialog() {
+interface ExportDialogProps {
+  data: any[]
+  filename?: string
+}
+
+export function ExportDialog({ data, filename = 'pivot-export' }: ExportDialogProps) {
   const [open, setOpen] = useState(false)
   const [format, setFormat] = useState<ExportFormat>('csv')
   const [isExporting, setIsExporting] = useState(false)
@@ -25,33 +30,28 @@ export function ExportDialog() {
   const handleExport = async () => {
     setIsExporting(true)
     try {
-      // In a real implementation, we would pass the actual pivot data
-      // For now, we'll export sample data
-      const { generateSampleData } = await import('@/app/actions/pivot')
-      const sampleData = await generateSampleData()
-
-      const result = await exportPivot(sampleData, format)
+      const result = await exportPivotData(data, format)
 
       // Download the file
       let blob: Blob
-      let filename: string
+      let downloadFilename: string
 
       if (format === 'csv') {
         blob = new Blob([result as string], { type: 'text/csv' })
-        filename = `pivot-export-${Date.now()}.csv`
+        downloadFilename = `${filename}-${Date.now()}.csv`
       } else if (format === 'excel') {
         blob = result as Blob
-        filename = `pivot-export-${Date.now()}.xlsx`
+        downloadFilename = `${filename}-${Date.now()}.xlsx`
       } else {
         blob = new Blob([result as string], { type: 'application/json' })
-        filename = `pivot-export-${Date.now()}.json`
+        downloadFilename = `${filename}-${Date.now()}.json`
       }
 
       // Create download link
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = filename
+      a.download = downloadFilename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

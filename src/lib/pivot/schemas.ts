@@ -49,7 +49,12 @@ export const PivotConfigSchema = z.object({
     showColumnTotals: z.boolean().default(true),
     showGrandTotal: z.boolean().default(true),
     expandedByDefault: z.boolean().default(false),
-  }).default({}),
+  }).default({
+    showRowTotals: true,
+    showColumnTotals: true,
+    showGrandTotal: true,
+    expandedByDefault: false,
+  }),
 })
 
 export type PivotConfig = z.infer<typeof PivotConfigSchema>

@@ -18,7 +18,7 @@ export const sum: AggregationFn<number> = (values) => {
 export const avg: AggregationFn<number> = (values) => {
   if (!values || values.length === 0) return 0
   const total = sum(values)
-  return total / values.length
+  return (total ?? 0) / values.length
 }
 
 /**

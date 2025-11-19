@@ -8,13 +8,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import type { PivotConfig } from '@/lib/pivot/schemas'
+} from '../ui/card'
+import { Button } from '../ui/button'
+import { Separator } from '../ui/separator'
+import type { PivotConfig } from '../../lib/pivot/schemas'
 import { DraggableField } from './draggable-field'
 import { DropZone } from './drop-zone'
-import { ExportDialog } from './export-dialog'
 import { Settings2, RefreshCw, Loader2 } from 'lucide-react'
 
 interface PivotPanelProps {
@@ -199,7 +198,6 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
               <RefreshCw className="h-4 w-4 mr-2" />
               Reset
             </Button>
-            <ExportDialog />
           </div>
         </div>
       </CardHeader>

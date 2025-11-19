@@ -5,6 +5,29 @@ import { aggregate } from './aggregations'
 /**
  * Main pivot transformation function
  * Transforms raw data into pivoted format based on configuration
+ *
+ * @param rawData - Array of data objects to transform
+ * @param config - Pivot configuration specifying row fields, column fields, value fields, and options
+ * @returns PivotResult containing transformed data, metadata, and config
+ *
+ * @example
+ * ```typescript
+ * const rawData = [
+ *   { region: 'North', product: 'A', sales: 100 },
+ *   { region: 'South', product: 'A', sales: 150 },
+ * ]
+ *
+ * const config: PivotConfig = {
+ *   rowFields: ['region'],
+ *   columnFields: ['product'],
+ *   valueFields: [{ field: 'sales', aggregation: 'sum' }],
+ *   options: { showRowTotals: true, showColumnTotals: true, showGrandTotal: true }
+ * }
+ *
+ * const result = transformToPivot(rawData, config)
+ * // result.data contains the pivoted table data
+ * // result.metadata contains rowCount, columnCount, uniqueValues
+ * ```
  */
 export function transformToPivot(
   rawData: any[],
@@ -59,7 +82,6 @@ export function transformToPivot(
       uniqueValues: Object.fromEntries(
         Object.entries(uniqueColumnValues).map(([k, v]) => [k, Array.from(v)])
       ),
-      pivotColumns: generatePivotColumnMetadata(uniqueColumnValues, config.columnFields, config.valueFields),
     },
     config,
   }

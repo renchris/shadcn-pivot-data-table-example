@@ -51,6 +51,7 @@ export const scenarios: Record<string, ScenarioConfig> = {
         },
       ],
       options: {
+        expandedByDefault: false,
         showRowTotals: false,
         showColumnTotals: false,
         showGrandTotal: false,
@@ -84,6 +85,7 @@ export const scenarios: Record<string, ScenarioConfig> = {
         },
       ],
       options: {
+        expandedByDefault: false,
         showRowTotals: true,
         showColumnTotals: false,
         showGrandTotal: true,
@@ -117,6 +119,7 @@ export const scenarios: Record<string, ScenarioConfig> = {
         },
       ],
       options: {
+        expandedByDefault: false,
         showRowTotals: true,
         showColumnTotals: false,
         showGrandTotal: true,
@@ -160,6 +163,7 @@ export const scenarios: Record<string, ScenarioConfig> = {
         },
       ],
       options: {
+        expandedByDefault: false,
         showRowTotals: true,
         showColumnTotals: false,
         showGrandTotal: true,
@@ -198,6 +202,7 @@ export const scenarios: Record<string, ScenarioConfig> = {
         },
       ],
       options: {
+        expandedByDefault: false,
         showRowTotals: true,
         showColumnTotals: false,
         showGrandTotal: true,
