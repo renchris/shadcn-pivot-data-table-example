@@ -1,5 +1,19 @@
 # shadcn-pivot-data-table-example
 
+## 1.1.0
+
+### Minor Changes
+
+- Add two-branch library strategy and comprehensive corporate deployment documentation
+
+  - Implement dual-branch strategy: main (demo) and library (npm package)
+  - Add CORPORATE-DEPLOYMENT.md with 3 deployment methods (Git, file path, private registry)
+  - Add SETUP-CHECKLIST.md for step-by-step corporate deployment verification
+  - Add templates/ directory with ready-to-use configuration files
+  - Update all documentation with YOUR_ORG placeholders for organization portability
+  - Built library (dist/) is committed to git for zero-build deployment
+  - Full Next.js 16/Turbopack compatibility via Git dependencies
+
 ## 1.0.0
 
 ### Major Changes
