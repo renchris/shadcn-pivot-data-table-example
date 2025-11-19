@@ -10,7 +10,9 @@
 
 A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStack Table v8, and modern React patterns. Features both styled and headless variants for maximum flexibility.
 
-> **Note:** This is the library-only branch. For the interactive demo and local usage examples, see the [main branch](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example).
+> **Note:** This is the library-only branch. For the interactive demo and local usage examples, see the [main branch](https://github.com/YOUR_ORG/pivot-table) or the public reference at [chrisrennewbie/shadcn-pivot-data-table-example](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example).
+>
+> **🏢 Corporate Deployment?** See [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md) for organization-specific setup including .zip transfers and private registries.
 
 ## ✨ Features
 
@@ -52,21 +54,29 @@ yarn add shadcn-pivot-table
 
 ### Git Dependency (From GitHub)
 
-For direct installation from this GitHub repository (useful for private organizations or unreleased versions):
+**For corporate/private organizations**, use your organization's repository:
 
 ```bash
 # Using HTTPS (recommended for CI/CD with GITHUB_TOKEN)
-npm install pivot-table@git+https://github.com/renchris/shadcn-pivot-data-table-example.git#library
+npm install pivot-table@git+https://github.com/YOUR_ORG/pivot-table.git#library
 
 # Using SSH (recommended for local development)
-npm install pivot-table@git+ssh://git@github.com/renchris/shadcn-pivot-data-table-example.git#library
+npm install pivot-table@git+ssh://git@github.com/YOUR_ORG/pivot-table.git#library
 
 # Or in package.json
 {
   "dependencies": {
-    "pivot-table": "git+https://github.com/renchris/shadcn-pivot-data-table-example.git#library"
+    "pivot-table": "git+https://github.com/YOUR_ORG/pivot-table.git#library"
   }
 }
+```
+
+**Replace `YOUR_ORG`** with your GitHub organization name.
+
+**For public reference implementation**:
+
+```bash
+npm install pivot-table@git+https://github.com/renchris/shadcn-pivot-data-table-example.git#library
 ```
 
 This enables clean imports:

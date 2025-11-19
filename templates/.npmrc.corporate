@@ -1,0 +1,11 @@
+# Corporate npm Registry Configuration
+# Replace YOUR_ORG_REGISTRY with your organization's registry URL
+
+@your-org:registry=https://npm.your-company.com
+//npm.your-company.com/:_authToken=${NPM_TOKEN}
+
+# Optional: Set default registry for all packages
+# registry=https://npm.your-company.com
+
+# Optional: Always use authentication
+always-auth=true
