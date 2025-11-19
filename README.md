@@ -50,6 +50,49 @@ bun add shadcn-pivot-table
 yarn add shadcn-pivot-table
 ```
 
+### Git Dependency (From GitHub)
+
+For direct installation from this GitHub repository (useful for private organizations or unreleased versions):
+
+```bash
+# Using HTTPS (recommended for CI/CD with GITHUB_TOKEN)
+npm install pivot-table@git+https://github.com/renchris/shadcn-pivot-data-table-example.git#library
+
+# Using SSH (recommended for local development)
+npm install pivot-table@git+ssh://git@github.com/renchris/shadcn-pivot-data-table-example.git#library
+
+# Or in package.json
+{
+  "dependencies": {
+    "pivot-table": "git+https://github.com/renchris/shadcn-pivot-data-table-example.git#library"
+  }
+}
+```
+
+This enables clean imports:
+```typescript
+import { PivotTable } from 'pivot-table'
+import { transformToPivot } from 'pivot-table/headless'
+```
+
+**Why use Git dependencies?**
+- ✅ Works with Next.js/Turbopack (avoids symlink issues)
+- ✅ Access private organization repos
+- ✅ Install pre-release versions or specific commits
+- ✅ Clean import syntax with package aliases
+
+**Version pinning:**
+```bash
+# Specific version tag
+npm install pivot-table@git+https://...#v1.0.0
+
+# Specific commit
+npm install pivot-table@git+https://...#a204e45
+
+# Latest on library branch (default)
+npm install pivot-table@git+https://...#library
+```
+
 ### Peer Dependencies
 
 ```bash
