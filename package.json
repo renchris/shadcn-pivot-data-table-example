@@ -1,8 +1,8 @@
 {
   "name": "shadcn-pivot-data-table-example",
   "version": "1.0.0",
-  "private": true,
-  "description": "Enterprise-grade pivot table with interactive Next.js demo. For npm package, see the 'library' branch.",
+  "private": false,
+  "description": "Enterprise-grade pivot table built with Shadcn Data Table, TanStack Table v8, and Next.js Server Components",
   "author": "Chris Ren",
   "license": "MIT",
   "repository": {

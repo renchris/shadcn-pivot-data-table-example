@@ -1,32 +1,16 @@
-# 📊 Enterprise Pivot Table - Interactive Demo
+# 📊 Shadcn Pivot Table
 
-> Production-ready pivot table library with interactive Next.js demo showcasing drag-and-drop configuration, financial scenarios, and export functionality
+> Enterprise-grade pivot table library for React with server-side transformation, drag-and-drop configuration, and virtual scrolling
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![npm](https://img.shields.io/npm/v/shadcn-pivot-table)](https://www.npmjs.com/package/shadcn-pivot-table)
+[![Next.js](https://img.shields.io/badge/Next.js-13+-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18+-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStack Table v8, and modern React patterns. This repository contains both the **interactive demo application** and the **library source code** for flexible local usage.
+A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStack Table v8, and modern React patterns. Features both styled and headless variants for maximum flexibility.
 
-## 🎬 Quick Demo
-
-```bash
-# Clone and run the demo
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
-cd shadcn-pivot-data-table-example
-bun install
-bun dev
-
-# Open http://localhost:3000/pivot
-```
-
-The demo includes **5 financial scenarios**:
-- 📈 **Market Data** - OHLC analysis for tech stocks
-- 💰 **Trading P&L** - Multi-desk profit & loss tracking
-- 🏦 **Bond Portfolio** - Fixed income analytics
-- 📊 **Options Greeks** - Risk exposure analysis
-- ⚠️ **Risk VaR** - Value-at-Risk by asset class
+> **Note:** This is the library-only branch. For the interactive demo and local usage examples, see the [main branch](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example).
 
 ## ✨ Features
 
@@ -54,69 +38,59 @@ The demo includes **5 financial scenarios**:
 - ✅ **Excel Export** - Formatted .xlsx with styling via ExcelJS
 - ✅ **JSON Export** - Structured data for API integration
 
-## 📦 Using as a Library
+## 🚀 Quick Start
 
-This repository is structured for **flexible local usage**. You can use it in your projects in several ways:
-
-### Option 1: Local Development (Recommended)
+### Installation
 
 ```bash
-# Clone and link globally
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
-cd shadcn-pivot-data-table-example
-bun install && bun run build
-bun link
-
-# In your project
-bun link shadcn-pivot-data-table-example
-```
-
-### Option 2: File Path Dependency
-
-```json
-{
-  "dependencies": {
-    "shadcn-pivot-table": "file:./lib/pivot-table"
-  }
-}
-```
-
-### Option 3: Git Submodule
-
-```bash
-git submodule add https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git lib/pivot-table
-```
-
-### Option 4: npm Package (Library Branch)
-
-For the published npm package version, see the **`library` branch**:
-
-```bash
-# The library branch contains a cleaned version for npm publishing
-git checkout library
-
-# Or install from npm (when published)
 npm install shadcn-pivot-table
+# or
+bun add shadcn-pivot-table
+# or
+yarn add shadcn-pivot-table
 ```
 
-📖 **See [LOCAL-USAGE.md](./LOCAL-USAGE.md) for complete guide** on all local usage patterns, including workspace integration and direct source copying.
+### Peer Dependencies
 
-## 🚀 Basic Usage
+```bash
+npm install react react-dom @tanstack/react-table @tanstack/react-virtual
+```
 
-### Styled Component (Full UI)
+For Shadcn UI components (required for styled variant):
+```bash
+npm install @radix-ui/react-checkbox @radix-ui/react-dialog @radix-ui/react-dropdown-menu
+# ... (see package.json peerDependencies for full list)
+```
+
+### Basic Usage
 
 ```typescript
-import { PivotTable, transformToPivot } from 'shadcn-pivot-data-table-example'
+import { transformToPivot, PivotTable } from 'shadcn-pivot-table'
 
+// Your raw data
+const salesData = [
+  { region: 'North', product: 'A', sales: 100, units: 10 },
+  { region: 'North', product: 'B', sales: 150, units: 15 },
+  { region: 'South', product: 'A', sales: 200, units: 20 },
+]
+
+// Configure the pivot
 const config = {
   rowFields: ['region'],
   columnFields: ['product'],
   valueFields: [
     { field: 'sales', aggregation: 'sum', displayName: 'Total Sales' },
   ],
+  options: {
+    showRowTotals: true,
+    showColumnTotals: true,
+    showGrandTotal: true,
+    expandedByDefault: false,
+  },
 }
 
-const result = transformToPivot(rawData, config)
+// Transform and render
+const result = transformToPivot(salesData, config)
 
 <PivotTable
   data={result.data}
@@ -125,16 +99,46 @@ const result = transformToPivot(rawData, config)
 />
 ```
 
+## 📦 Entry Points
+
+### Main Entry (Styled Components)
+
+```typescript
+import { PivotTable, transformToPivot } from 'shadcn-pivot-table'
+
+// Includes full React UI with Shadcn components
+```
+
+### Headless Entry (Framework-Agnostic)
+
+```typescript
+import { transformToPivot, aggregate } from 'shadcn-pivot-table/headless'
+
+// Core transformation logic only - build your own UI
+// Use with Vue, Svelte, Angular, or vanilla JS
+```
+
+### Server Entry (Next.js)
+
+```typescript
+import { transformToPivot, exportPivotData } from 'shadcn-pivot-table/server'
+
+// Server-side utilities for Next.js Server Actions
+```
+
+## 💡 Usage Examples
+
 ### Client-Side (Interactive Configuration)
 
 ```typescript
-import { ClientPivotWrapper } from 'shadcn-pivot-data-table-example'
+import { ClientPivotWrapper } from 'shadcn-pivot-table'
 
 <ClientPivotWrapper
   rawData={salesData}
   initialConfig={config}
   availableFields={[
     { name: 'region', type: 'string' },
+    { name: 'product', type: 'string' },
     { name: 'sales', type: 'number' },
   ]}
 />
@@ -145,7 +149,7 @@ import { ClientPivotWrapper } from 'shadcn-pivot-data-table-example'
 ```typescript
 // app/actions/pivot.ts
 'use server'
-import { transformToPivot } from 'shadcn-pivot-data-table-example/server'
+import { transformToPivot } from 'shadcn-pivot-table/server'
 
 export async function executePivot(config) {
   const data = await db.query('SELECT * FROM sales')
@@ -153,175 +157,154 @@ export async function executePivot(config) {
 }
 
 // app/page.tsx
-import { PivotTable } from 'shadcn-pivot-data-table-example'
+import { PivotTable } from 'shadcn-pivot-table'
 
 const result = await executePivot(config)
 <PivotTable {...result} />
 ```
 
-### Headless (Framework-Agnostic)
+### Headless (Custom UI)
 
 ```typescript
-import { transformToPivot } from 'shadcn-pivot-data-table-example/headless'
+import { transformToPivot } from 'shadcn-pivot-table/headless'
 
-// Use with Vue, Svelte, Angular, or vanilla JS
 const result = transformToPivot(rawData, config)
-// Build your own UI with result.data
+
+// Build your own table UI with result.data
+result.data.forEach(row => {
+  // Custom rendering logic
+})
 ```
 
-## 📖 Documentation
+### Export Functionality
 
-- **[LOCAL-USAGE.md](./LOCAL-USAGE.md)** - Complete guide for local usage patterns
-- **[API.md](./API.md)** - Full API reference and examples
-- **[LIBRARY-READY.md](./LIBRARY-READY.md)** - Library packaging status
+```typescript
+import { exportPivotData } from 'shadcn-pivot-table/server'
 
-## 📁 Repository Structure
+// Export as CSV
+const csv = await exportPivotData(result, 'csv')
 
-```
-shadcn-pivot-data-table-example/
-├── src/
-│   ├── app/                      # Next.js demo application
-│   │   ├── pivot/                # Demo page (/pivot route)
-│   │   └── actions/              # Server actions
-│   ├── components/
-│   │   ├── pivot-table/          # Library React components
-│   │   └── ui/                   # Shadcn UI components (19 components)
-│   ├── lib/pivot/
-│   │   ├── transformer.ts        # Core pivot transformation algorithm
-│   │   ├── aggregations.ts       # 8 aggregation functions
-│   │   ├── schemas.ts            # Zod validation schemas
-│   │   ├── types.ts              # TypeScript type definitions
-│   │   ├── export.ts             # CSV/Excel/JSON export utilities
-│   │   └── scenarios.ts          # Demo financial scenarios
-│   └── __tests__/                # Test suites for all scenarios
-├── dist/                         # Built library (after `bun run build`)
-│   ├── index.{js,cjs,d.ts}       # Main entry (styled components)
-│   ├── headless.{js,cjs,d.ts}    # Headless entry (no React)
-│   └── server.{js,cjs,d.ts}      # Server entry (Next.js)
-├── e2e/                          # Playwright E2E tests
-├── scripts/
-│   └── sync-library-branch.sh   # Script to sync library branch
-├── package.json                  # Main package (private: true, demo + library)
-└── tsup.config.ts                # Library build configuration
+// Export as Excel
+const excel = await exportPivotData(result, 'excel')
+
+// Export as JSON
+const json = await exportPivotData(result, 'json')
 ```
 
-## 📦 Tech Stack
+## 📖 API Reference
 
-- **Next.js 16** + Turbopack
-- **React 19** Server Components
-- **TanStack Table v8** + Virtual
-- **Pragmatic Drag & Drop** by Atlassian
-- **Shadcn UI** with Tailwind CSS v4
-- **TypeScript 5** + Zod validation
-- **Bun** runtime and package manager
+### `transformToPivot(data, config)`
+
+Core transformation function that converts flat data into pivot table format.
+
+**Parameters:**
+- `data: unknown[]` - Array of raw data objects
+- `config: PivotConfig` - Pivot configuration object
+
+**Returns:**
+```typescript
+{
+  data: PivotRow[]
+  config: PivotConfig
+  metadata: {
+    rowFieldsData: FieldData[]
+    columnFieldsData: FieldData[]
+    valueFieldsData: FieldData[]
+  }
+}
+```
+
+### `PivotConfig`
+
+```typescript
+interface PivotConfig {
+  rowFields: string[]
+  columnFields: string[]
+  valueFields: ValueField[]
+  options?: {
+    showRowTotals?: boolean
+    showColumnTotals?: boolean
+    showGrandTotal?: boolean
+    expandedByDefault?: boolean
+  }
+}
+
+interface ValueField {
+  field: string
+  aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max' | 'median' | 'first' | 'last'
+  displayName: string
+}
+```
+
+### Aggregation Functions
+
+All aggregation functions available from `shadcn-pivot-table/headless`:
+
+```typescript
+import { sum, avg, count, min, max, median, first, last } from 'shadcn-pivot-table/headless'
+
+// Each function takes an array of values and returns a number
+const total = sum([1, 2, 3]) // 6
+const average = avg([1, 2, 3]) // 2
+const middle = median([1, 2, 3, 4, 5]) // 3
+```
 
 ## 🎯 Use Cases
 
 - **Financial Dashboards** - P&L statements, balance sheets, trading analytics
-- **Sales Analytics** - Regional performance, product comparisons, time-series
-- **Data Exploration** - Interactive analysis for large datasets
+- **Sales Analytics** - Regional performance, product comparisons, time-series analysis
+- **Data Exploration** - Interactive data analysis for large datasets
 - **Reporting Tools** - Embedded pivot tables in SaaS applications
 - **Business Intelligence** - Self-service analytics for end users
 
-## 🔧 Development
+## 📦 Tech Stack
 
-### Run the Demo
+- **React 18+** / **React 19**
+- **TanStack Table v8** + TanStack Virtual
+- **Pragmatic Drag & Drop** by Atlassian
+- **Shadcn UI** components
+- **TypeScript 5** + Zod validation
+- **Next.js 13+** (optional, for server features)
 
-```bash
-bun install
-bun dev                  # Start Next.js dev server (http://localhost:3000)
-```
+## 🎬 Interactive Demo
 
-### Build the Library
+Try the interactive demo with 5 financial scenarios:
 
-```bash
-bun run build           # Build library to dist/
-bun run dev:lib         # Watch mode for library development
-```
+👉 **[View Demo](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example)** (main branch)
 
-### Testing
+The demo showcases:
+- Market Data OHLC analysis
+- Trading desk P&L tracking
+- Bond portfolio analytics
+- Options Greeks exposure
+- Risk VaR calculations
 
-```bash
-bun test                # Run unit tests
-bun run test:watch      # Watch mode for tests
-bun run test:coverage   # Generate coverage report
-bun run test:e2e        # Run Playwright E2E tests
-```
+## 📚 Documentation
 
-### Sync to Library Branch
+For complete documentation including local usage patterns, see the main repository:
 
-```bash
-# Create/update library branch for npm publishing
-bash scripts/sync-library-branch.sh
-```
-
-This script:
-- Creates `library` branch from `main`
-- Removes demo-specific files (`src/app`, `e2e`, scenarios)
-- Updates `package.json` for publishing (`private: false`)
-- Commits changes with sync reference
-
-## 🏗️ Architecture Decisions
-
-This repository uses a **hybrid structure** that optimizes for both demo and library usage:
-
-### Why Not a Monorepo?
-
-We chose a **flat structure** over `packages/pivot-table/` for several reasons:
-
-1. **Simpler Local Paths** - `file:./lib/pivot-table` vs `file:./lib/pivot-table/packages/pivot-table`
-2. **Immediate Demo** - `bun dev` works right after clone
-3. **Easy Linking** - `bun link` from root, no navigation
-4. **Familiar Pattern** - Matches single-package open source projects
-
-### Branch Strategy
-
-- **`main` branch** - Demo app + library source (this branch, for .zip downloads and local usage)
-- **`library` branch** - Auto-generated, library-only code for npm publishing
-
-This keeps development simple (everything on `main`) while providing a clean library branch for publishing.
-
-## 🚢 Deploying the Demo
-
-The demo Next.js app can be self-deployed to any provider:
-
-```bash
-# Build for production
-bun run build:demo
-
-# Start production server
-bun start
-
-# Or deploy to:
-# - Vercel (easiest for Next.js)
-# - AWS Amplify / EC2 / EKS
-# - Harness.io Pipeline
-# - Any Node.js / Bun hosting
-```
+- **[Repository](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example)** - Main branch with demo
+- **[LOCAL-USAGE.md](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/LOCAL-USAGE.md)** - Local development patterns
+- **[API.md](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/API.md)** - Full API reference
 
 ## 🤝 Contributing
 
-Contributions welcome! This project is designed for:
+Contributions welcome! Please visit the [main repository](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example) to:
 
-- Library features (new aggregations, export formats, etc.)
-- Demo improvements (new scenarios, better UX)
-- Documentation enhancements
-- Bug fixes and optimizations
-
-Please open an issue first to discuss significant changes.
+- Report issues
+- Submit pull requests
+- Request features
+- View the demo app
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE)
+MIT License - see [LICENSE](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/LICENSE)
 
 ---
 
-**Repository Structure:**
-- Main branch: Demo + library source (you are here)
-- Library branch: Packaged for npm publishing
-
-**For local usage:** See [LOCAL-USAGE.md](./LOCAL-USAGE.md)
-**For API docs:** See [API.md](./API.md)
+**Branches:**
+- `library` - npm package (you are here)
+- `main` - Demo app + library source
 
 ---
 
