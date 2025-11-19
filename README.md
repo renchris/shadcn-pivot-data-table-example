@@ -12,14 +12,16 @@ A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStac
 ## 🎬 Quick Demo
 
 ```bash
-# Clone and run the demo
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
-cd shadcn-pivot-data-table-example
+# Clone from your organization (or public reference)
+git clone https://github.com/YOUR_ORG/pivot-table.git
+cd pivot-table
 bun install
 bun dev
 
 # Open http://localhost:3000/pivot
 ```
+
+**Note**: Replace `YOUR_ORG` with your organization name, or use `chrisrennewbie/shadcn-pivot-data-table-example` for the public reference implementation.
 
 The demo includes **5 financial scenarios**:
 - 📈 **Market Data** - OHLC analysis for tech stocks
@@ -56,14 +58,44 @@ The demo includes **5 financial scenarios**:
 
 ## 📦 Using as a Library
 
-This repository is structured for **flexible local usage**. You can use it in your projects in several ways:
+This repository is structured for **flexible usage across organizations**. Choose the method that fits your deployment scenario:
 
-### Option 1: Local Development (Recommended)
+### 🏢 Corporate Deployment (Recommended for Next.js 16/Turbopack)
+
+**For organizations deploying this library internally:**
+
+```json
+{
+  "dependencies": {
+    "pivot-table": "git+https://github.com/YOUR_ORG/pivot-table.git#library"
+  }
+}
+```
+
+**Replace `YOUR_ORG`** with your GitHub organization name (e.g., `acme-corp`).
+
+**Setup:**
+1. Fork or upload this repository to your organization's GitHub
+2. Build the library: `npm install && npm run build`
+3. Install in consumer projects using the Git dependency above
+4. Clean imports work immediately: `import { PivotTable } from 'pivot-table'`
+
+✅ **Works perfectly with Next.js 16/Turbopack** (no symlink issues)
+✅ **Organization-portable** (no hardcoded references)
+✅ **Version controlled** and easy to update
+
+📖 **See [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)** for complete corporate deployment guide including .zip transfers, private registries, and authentication.
+
+---
+
+### 💻 Local Development Options
+
+#### Option 1: Bun/npm Link
 
 ```bash
 # Clone and link globally
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
-cd shadcn-pivot-data-table-example
+git clone https://github.com/YOUR_ORG/pivot-table.git
+cd pivot-table
 bun install && bun run build
 bun link
 
@@ -71,7 +103,7 @@ bun link
 bun link shadcn-pivot-data-table-example
 ```
 
-### Option 2: File Path Dependency
+#### Option 2: File Path Dependency
 
 ```json
 {
@@ -81,22 +113,28 @@ bun link shadcn-pivot-data-table-example
 }
 ```
 
-### Option 3: Git Submodule
+⚠️ **Note**: File paths create symlinks that don't work with Next.js 16/Turbopack. Use Git dependencies instead.
+
+#### Option 3: Git Submodule
 
 ```bash
-git submodule add https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git lib/pivot-table
+git submodule add https://github.com/YOUR_ORG/pivot-table.git lib/pivot-table
 ```
 
-### Option 4: npm Package (Library Branch)
-
-For the published npm package version, see the **`library` branch**:
+#### Option 4: npm Package (When Published)
 
 ```bash
-# The library branch contains a cleaned version for npm publishing
-git checkout library
-
-# Or install from npm (when published)
 npm install shadcn-pivot-table
+```
+
+---
+
+### 🔍 Reference Implementation
+
+To try the **public reference version** from the original author:
+
+```bash
+git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
 ```
 
 📖 **See [LOCAL-USAGE.md](./LOCAL-USAGE.md) for complete guide** on all local usage patterns, including workspace integration and direct source copying.

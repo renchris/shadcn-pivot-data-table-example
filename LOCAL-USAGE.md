@@ -2,6 +2,8 @@
 
 This guide explains how to use the Shadcn Pivot Table library in your project **without publishing to npm**. These patterns are ideal for local development, customization, or when you want to use the library from source.
 
+> **🏢 Corporate Deployment?** See [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md) for organization-specific setup including .zip transfers, private registries, and Next.js 16/Turbopack compatibility.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -42,9 +44,9 @@ Link the library globally for use across multiple projects.
 #### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
-cd shadcn-pivot-data-table-example
+# Clone the repository (use YOUR_ORG or chrisrennewbie for public reference)
+git clone https://github.com/YOUR_ORG/pivot-table.git
+cd pivot-table
 
 # Install dependencies and build
 bun install
@@ -109,7 +111,7 @@ my-project/
 
 ```bash
 cd my-project
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git lib/pivot-table
+git clone https://github.com/YOUR_ORG/pivot-table.git lib/pivot-table
 cd lib/pivot-table
 bun install
 bun run build
@@ -153,7 +155,7 @@ Add the library as a Git submodule for version-controlled local usage.
 
 ```bash
 cd my-project
-git submodule add https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git lib/pivot-table
+git submodule add https://github.com/YOUR_ORG/pivot-table.git lib/pivot-table
 git submodule update --init --recursive
 cd lib/pivot-table
 bun install
@@ -261,7 +263,7 @@ my-monorepo/
 cd my-monorepo
 
 # Clone library into vendor/
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git vendor/pivot-table
+git clone https://github.com/YOUR_ORG/pivot-table.git vendor/pivot-table
 
 # Install all workspace dependencies
 bun install
@@ -296,7 +298,7 @@ Copy library source directly into your project for full customization.
 
 ```bash
 # Clone the repo temporarily
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git /tmp/pivot-table
+git clone https://github.com/YOUR_ORG/pivot-table.git /tmp/pivot-table
 
 # Copy library source to your project
 cp -r /tmp/pivot-table/src/components/pivot-table my-project/src/components/
@@ -367,7 +369,7 @@ The demo Next.js app is included in the repository:
 
 ```bash
 # Clone and install
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
+git clone https://github.com/YOUR_ORG/pivot-table.git
 cd shadcn-pivot-data-table-example
 bun install
 
@@ -492,7 +494,7 @@ bun run build
 - **API Documentation**: See [API.md](./API.md)
 - **Library Status**: See [LIBRARY-READY.md](./LIBRARY-READY.md)
 - **npm Package**: For published version, see `library` branch
-- **Issues**: https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/issues
+- **Issues**: Track issues in your organization's repository or refer to the public version at https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/issues
 
 ---
 
