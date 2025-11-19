@@ -105,7 +105,7 @@ fi
 # Next.js environment types
 if [ -f "next-env.d.ts" ]; then
   echo -e "  ${YELLOW}Removing next-env.d.ts${NC}"
-  git rm -f next-env.d.ts
+  git rm -f next-env.d.ts 2>/dev/null || true
 fi
 
 # Public assets (Next.js specific)
