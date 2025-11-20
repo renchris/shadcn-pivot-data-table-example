@@ -195,6 +195,8 @@ The demo showcases 5 financial scenarios with drag-and-drop pivot configuration.
 
 After cloning, see these guides:
 
+- **[COMPATIBILITY.md](./COMPATIBILITY.md)** - Comprehensive version compatibility matrix
+- **[bunfig.toml](./bunfig.toml)**  Bun registry configuration template
 - **[CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)** - Complete corporate deployment guide
 - **[SETUP-CHECKLIST.md](./SETUP-CHECKLIST.md)** - Step-by-step verification
 - **[API.md](./API.md)** - Full API reference and examples
