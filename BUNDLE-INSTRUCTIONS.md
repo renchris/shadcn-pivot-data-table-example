@@ -1,6 +1,6 @@
 # Git Bundle Installation Instructions
 
-This file (`pivot-table-v1.0.0.bundle`) is a **Git bundle** containing the complete pivot table library repository with full commit history, all branches, and tags.
+This file (`pivot-table-v1.1.1.bundle`) is a **Git bundle** containing the complete pivot table library repository with full commit history, all branches, and tags.
 
 ## What is a Git Bundle?
 
@@ -27,7 +27,7 @@ git --version
 cd /path/to/your/workspace
 
 # 2. Clone directly from the bundle
-git clone pivot-table-v1.0.0.bundle pivot-table-library
+git clone pivot-table-v1.1.1.bundle pivot-table-library
 
 # 3. Navigate into the cloned repository
 cd pivot-table-library
@@ -57,7 +57,7 @@ If you already have a Git repository and want to fetch from the bundle:
 cd /path/to/your/repo
 
 # 2. Add bundle as a remote
-git remote add bundle-remote /path/to/pivot-table-v1.0.0.bundle
+git remote add bundle-remote /path/to/pivot-table-v1.1.1.bundle
 
 # 3. Fetch from bundle
 git fetch bundle-remote
@@ -88,7 +88,7 @@ git status
 
 Expected output:
 - **Branches**: `main`, `library`, `shadcn-pivot-export`
-- **Tags**: `v1.0.0`, `v1.1.0`
+- **Tags**: `v1.0.0`, `v1.1.0`, `v1.1.1`
 - **Status**: Clean working tree
 
 ## Using the Library
@@ -161,9 +161,9 @@ bun link shadcn-pivot-data-table-example
 
 This bundle includes:
 
-- ✅ Full Git history (all commits from initial to v1.1.0)
+- ✅ Full Git history (all commits from initial to v1.1.1)
 - ✅ All branches: `main`, `library`, `shadcn-pivot-export`
-- ✅ All tags: `v1.0.0`, `v1.1.0`
+- ✅ All tags: `v1.0.0`, `v1.1.0`, `v1.1.1`
 - ✅ All source code (TypeScript `.ts` and `.tsx` files)
 - ✅ All documentation (Markdown files)
 - ✅ Configuration files (`package.json`, `tsconfig.json`, etc.)
@@ -208,10 +208,10 @@ After cloning, see these guides:
 
 ```bash
 # Correct
-git clone pivot-table-v1.0.0.bundle pivot-table-library
+git clone pivot-table-v1.1.1.bundle pivot-table-library
 
 # Incorrect
-cd pivot-table-v1.0.0.bundle  # This won't work
+cd pivot-table-v1.1.1.bundle  # This won't work
 ```
 
 ### Issue: "Bundle file not found"
@@ -220,10 +220,10 @@ cd pivot-table-v1.0.0.bundle  # This won't work
 
 ```bash
 # Absolute path
-git clone /Users/yourname/Downloads/pivot-table-v1.0.0.bundle pivot-table
+git clone /Users/yourname/Downloads/pivot-table-v1.1.1.bundle pivot-table
 
 # Relative path
-git clone ../Downloads/pivot-table-v1.0.0.bundle pivot-table
+git clone ../Downloads/pivot-table-v1.1.1.bundle pivot-table
 ```
 
 ### Issue: "Permission denied"
@@ -231,8 +231,8 @@ git clone ../Downloads/pivot-table-v1.0.0.bundle pivot-table
 **Solution**: Ensure the bundle file has read permissions:
 
 ```bash
-chmod +r pivot-table-v1.0.0.bundle
-git clone pivot-table-v1.0.0.bundle pivot-table
+chmod +r pivot-table-v1.1.1.bundle
+git clone pivot-table-v1.1.1.bundle pivot-table
 ```
 
 ### Issue: Build fails with "Cannot find module"
@@ -288,7 +288,7 @@ Then share the download link via email instead of attaching the file.
 
 ---
 
-**Repository Version**: v1.1.0
+**Repository Version**: v1.1.1
 **Bundle Created**: 2025-11-19
 **Format**: Git Bundle (.bundle)
 **Size**: 1.5 MB
