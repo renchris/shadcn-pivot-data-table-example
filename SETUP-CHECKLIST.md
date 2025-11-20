@@ -7,7 +7,7 @@ Use this checklist to verify successful deployment of the Pivot Table library in
 - [ ] **Received library files** (.zip or git clone)
 - [ ] **Chosen deployment method** (Git dependency recommended for Next.js 16)
 - [ ] **Have access** to your GitHub organization or private registry
-- [ ] **Reviewed** [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)
+- [ ] **Reviewed** [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 
@@ -227,7 +227,7 @@ If you encounter issues, check:
    - [ ] GITHUB_TOKEN set (for Git HTTPS)
    - [ ] NPM_TOKEN set (for private registry)
 
-See [CORPORATE-DEPLOYMENT.md - Troubleshooting](./CORPORATE-DEPLOYMENT.md#troubleshooting) for detailed solutions.
+See [DEPLOYMENT.md - Troubleshooting](./DEPLOYMENT.md#troubleshooting) for detailed solutions.
 
 ---
 
@@ -285,11 +285,11 @@ After successful deployment:
 1. Review [API.md](./API.md) for complete API reference
 2. Explore demo scenarios at `/pivot` route
 3. Customize components for your use case
-4. Set up CI/CD integration (see CORPORATE-DEPLOYMENT.md)
+4. Set up CI/CD integration (see DEPLOYMENT.md)
 5. Plan for version updates and maintenance
 
 ## Support
 
-- **Documentation**: [README.md](./README.md), [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)
+- **Documentation**: [README.md](./README.md), [DEPLOYMENT.md](./DEPLOYMENT.md)
 - **Configuration Templates**: [templates/](./templates/)
 - **Issues**: Contact your internal development team or refer to the public repository

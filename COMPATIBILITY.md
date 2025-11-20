@@ -468,7 +468,7 @@ We aim to maintain compatibility with:
 
 ---
 
-For corporate deployment guidance, see [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)
+For deployment guidance, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 For installation help, see [SETUP-CHECKLIST.md](./SETUP-CHECKLIST.md)
 

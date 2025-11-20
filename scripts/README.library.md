@@ -10,7 +10,7 @@
 
 A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStack Table v8, and modern React patterns. Features both styled and headless variants for maximum flexibility.
 
-> **Note:** This is the library-only branch. For the interactive demo and local usage examples, see the [main branch](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example).
+> **Note:** This is the library-only branch. For the interactive demo and local usage examples, see the [main branch](https://github.com/YOUR_ORG/pivot-table).
 
 ## ✨ Features
 
@@ -270,7 +270,7 @@ const middle = median([1, 2, 3, 4, 5]) // 3
 
 Try the interactive demo with 5 financial scenarios:
 
-👉 **[View Demo](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example)** (main branch)
+👉 **[View Demo](https://github.com/YOUR_ORG/pivot-table)** (main branch)
 
 The demo showcases:
 - Market Data OHLC analysis
@@ -283,13 +283,13 @@ The demo showcases:
 
 For complete documentation including local usage patterns, see the main repository:
 
-- **[Repository](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example)** - Main branch with demo
-- **[LOCAL-USAGE.md](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/LOCAL-USAGE.md)** - Local development patterns
-- **[API.md](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/API.md)** - Full API reference
+- **[Repository](https://github.com/YOUR_ORG/pivot-table)** - Main branch with demo
+- **[LOCAL-USAGE.md](https://github.com/YOUR_ORG/pivot-table/blob/main/LOCAL-USAGE.md)** - Local development patterns
+- **[API.md](https://github.com/YOUR_ORG/pivot-table/blob/main/API.md)** - Full API reference
 
 ## 🤝 Contributing
 
-Contributions welcome! Please visit the [main repository](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example) to:
+Contributions welcome! Please visit the [main repository](https://github.com/YOUR_ORG/pivot-table) to:
 
 - Report issues
 - Submit pull requests
@@ -298,14 +298,10 @@ Contributions welcome! Please visit the [main repository](https://github.com/chr
 
 ## 📄 License
 
-MIT License - see [LICENSE](https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/blob/main/LICENSE)
+MIT License - see [LICENSE](https://github.com/YOUR_ORG/pivot-table/blob/main/LICENSE)
 
 ---
 
 **Branches:**
 - `library` - npm package (you are here)
 - `main` - Demo app + library source
-
----
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)

@@ -103,10 +103,10 @@ env:
 ## Deployment Guide
 
 For complete deployment instructions, see:
-- **[CORPORATE-DEPLOYMENT.md](../CORPORATE-DEPLOYMENT.md)** - Full corporate deployment guide
+- **[DEPLOYMENT.md](../DEPLOYMENT.md)** - Full deployment guide
 - **[SETUP-CHECKLIST.md](../SETUP-CHECKLIST.md)** - Quick setup verification
 - **[LOCAL-USAGE.md](../LOCAL-USAGE.md)** - Local development patterns
 
 ## Support
 
-Questions? Refer to the [Troubleshooting section](../CORPORATE-DEPLOYMENT.md#troubleshooting) in CORPORATE-DEPLOYMENT.md.
+Questions? Refer to the [Troubleshooting section](../DEPLOYMENT.md#troubleshooting) in DEPLOYMENT.md.

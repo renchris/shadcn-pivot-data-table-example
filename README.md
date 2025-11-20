@@ -39,7 +39,7 @@ bun dev
 # Open http://localhost:3000/pivot
 ```
 
-**Note**: Replace `YOUR_ORG` with your organization name, or use `chrisrennewbie/shadcn-pivot-data-table-example` for the public reference implementation.
+**Note**: Replace `YOUR_ORG` with your organization name.
 
 The demo includes **5 financial scenarios**:
 - 📈 **Market Data** - OHLC analysis for tech stocks
@@ -102,7 +102,7 @@ This repository is structured for **flexible usage across organizations**. Choos
 ✅ **Organization-portable** (no hardcoded references)
 ✅ **Version controlled** and easy to update
 
-📖 **See [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md)** for complete corporate deployment guide including .zip transfers, private registries, and authentication.
+📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md)** for complete deployment guide including .zip transfers, private registries, and authentication.
 
 ---
 
@@ -143,16 +143,6 @@ git submodule add https://github.com/YOUR_ORG/pivot-table.git lib/pivot-table
 
 ```bash
 npm install shadcn-pivot-table
-```
-
----
-
-### 🔍 Reference Implementation
-
-To try the **public reference version** from the original author:
-
-```bash
-git clone https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git
 ```
 
 📖 **See [LOCAL-USAGE.md](./LOCAL-USAGE.md) for complete guide** on all local usage patterns, including workspace integration and direct source copying.
@@ -380,5 +370,3 @@ MIT License - see [LICENSE](LICENSE)
 **For API docs:** See [API.md](./API.md)
 
 ---
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)

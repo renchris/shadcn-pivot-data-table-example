@@ -4,6 +4,7 @@ import { useMemo, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { PivotTable } from './pivot-table'
 import { PivotPanel } from './pivot-panel'
+import { ExportDialog } from './export-dialog'
 import { transformToPivot } from '../../lib/pivot/transformer'
 import type { PivotConfig } from '../../lib/pivot/schemas'
 
@@ -54,10 +55,15 @@ export function ClientPivotWrapper({
       {/* Results Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Results</CardTitle>
-          <CardDescription>
-            {pivotResult.metadata.rowCount} rows × {pivotResult.metadata.columnCount} columns
-          </CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Results</CardTitle>
+              <CardDescription>
+                {pivotResult.metadata.rowCount} rows × {pivotResult.metadata.columnCount} columns
+              </CardDescription>
+            </div>
+            <ExportDialog data={pivotResult.data} filename="pivot-export" />
+          </div>
         </CardHeader>
         <CardContent>
           <PivotTable

@@ -2,7 +2,7 @@
 
 This guide explains how to use the Shadcn Pivot Table library in your project **without publishing to npm**. These patterns are ideal for local development, customization, or when you want to use the library from source.
 
-> **🏢 Corporate Deployment?** See [CORPORATE-DEPLOYMENT.md](./CORPORATE-DEPLOYMENT.md) for organization-specific setup including .zip transfers, private registries, and Next.js 16/Turbopack compatibility.
+> **🏢 Corporate Deployment?** See [DEPLOYMENT.md](./DEPLOYMENT.md) for organization-specific setup including .zip transfers, private registries, and Next.js 16/Turbopack compatibility.
 
 ## Table of Contents
 
@@ -44,7 +44,7 @@ Link the library globally for use across multiple projects.
 #### Setup
 
 ```bash
-# Clone the repository (use YOUR_ORG or chrisrennewbie for public reference)
+# Clone the repository (use YOUR_ORG)
 git clone https://github.com/YOUR_ORG/pivot-table.git
 cd pivot-table
 
@@ -494,7 +494,7 @@ bun run build
 - **API Documentation**: See [API.md](./API.md)
 - **Library Status**: See [LIBRARY-READY.md](./LIBRARY-READY.md)
 - **npm Package**: For published version, see `library` branch
-- **Issues**: Track issues in your organization's repository or refer to the public version at https://github.com/chrisrennewbie/shadcn-pivot-data-table-example/issues
+- **Issues**: Track issues in your organization's repository
 
 ---
 
