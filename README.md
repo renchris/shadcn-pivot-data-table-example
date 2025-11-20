@@ -9,6 +9,24 @@
 
 A powerful, framework-agnostic pivot table library built with Shadcn UI, TanStack Table v8, and modern React patterns. This repository contains both the **interactive demo application** and the **library source code** for flexible local usage.
 
+## ⚙️ Requirements
+
+**Runtime & Package Managers:**
+- **Node.js** 18.0.0+ (20.x recommended)
+- **npm** 9.0.0+ or **Bun** 1.1.18+ (Bun recommended for speed & corporate .npmrc support)
+
+**Framework & Libraries:**
+- **React** 18.3.0+ or 19.x (both fully supported - see [COMPATIBILITY.md](./COMPATIBILITY.md))
+- **Next.js** 15.0.0+ (16.x recommended for Turbopack, requires React 19+)
+- **TypeScript** 5.0.0+
+
+📖 **See [COMPATIBILITY.md](./COMPATIBILITY.md)** for comprehensive version compatibility information, including:
+- React 18 vs React 19 support status
+- Next.js version requirements and breaking changes
+- Corporate registry version lag guidance
+- Dependency-specific version requirements
+- Upgrade guides and troubleshooting
+
 ## 🎬 Quick Demo
 
 ```bash

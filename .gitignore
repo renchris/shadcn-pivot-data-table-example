@@ -33,6 +33,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# registry authentication (for corporate deployments)
+# Note: bunfig.toml can be committed if it uses ${NPM_TOKEN} env vars
+# Only ignore if it contains inline tokens
+.npmrc.local
+*-credentials.json
+
 # vercel
 .vercel
 

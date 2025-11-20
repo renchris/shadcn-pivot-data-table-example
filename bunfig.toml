@@ -1,0 +1,45 @@
+# Bun Configuration for Corporate Deployments
+# This file configures Bun to use your organization's private npm registry
+
+# Default registry configuration
+[install]
+# Replace with your corporate registry URL
+# Examples:
+# - Artifactory: https://artifactory.company.com/artifactory/api/npm/npm-virtual
+# - Nexus: https://nexus.company.com/repository/npm-group
+# - Verdaccio: https://npm.company.com
+# - GitHub Packages: https://npm.pkg.github.com
+registry = "https://registry.npmjs.org/"  # Default to public npm (change this!)
+
+# Optional: Configure specific scopes to different registries
+[install.scopes]
+# Organization packages
+# "@your-org" = { token = "$NPM_TOKEN", url = "https://npm.company.com/" }
+
+# Public packages from npm (if using private registry as default)
+# "@radix-ui" = { url = "https://registry.npmjs.org/" }
+# "@tanstack" = { url = "https://registry.npmjs.org/" }
+
+# Authentication via environment variable (SAFE TO COMMIT)
+# Set NPM_TOKEN in your .env file (see .env.example)
+# Bun will automatically substitute ${NPM_TOKEN} with the value
+
+# Example configuration for corporate deployment:
+#
+# [install]
+# registry = "https://npm.company.com/"
+#
+# [install.scopes]
+# "@your-org" = { token = "$NPM_TOKEN", url = "https://npm.company.com/" }
+# "@radix-ui" = { url = "https://registry.npmjs.org/" }
+# "@tanstack" = { url = "https://registry.npmjs.org/" }
+
+# Performance optimizations
+[install.cache]
+# Cache packages for faster installs
+disable = false
+
+# Optional: Configure specific package settings
+# [install.peer]
+# # Auto-install peer dependencies
+# auto-install = true

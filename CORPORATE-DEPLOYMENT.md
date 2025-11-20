@@ -105,13 +105,16 @@ In your application's `package.json`:
 {
   "dependencies": {
     "pivot-table": "git+https://github.com/YOUR_ORG/pivot-table.git#library",
-    "@tanstack/react-table": "^8.21.3",
-    "@tanstack/react-virtual": "^3.13.12",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@tanstack/react-table": "^8.20.0",
+    "@tanstack/react-virtual": "^3.10.8",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "next": "^15.0.0"
   }
 }
 ```
+
+**Note**: These are **minimum required versions**. React 19 is fully supported by all dependencies. See [COMPATIBILITY.md](./COMPATIBILITY.md) for version details.
 
 **Replace `YOUR_ORG`** with your actual GitHub organization name (e.g., `acme-corp`).
 
@@ -359,14 +362,16 @@ ls dist/*.d.ts  # Should show type definition files
 
 **Symptoms:**
 ```
-npm WARN pivot-table@1.0.0 requires a peer of react@^19 but none is installed
+npm WARN pivot-table@1.0.0 requires a peer of react@>=18.3.0 but none is installed
 ```
 
 **Solution**: Install all peer dependencies listed in the library's `package.json`:
 
 ```bash
-npm install react react-dom @tanstack/react-table @tanstack/react-virtual
+npm install react@^18.3.0 react-dom@^18.3.0 @tanstack/react-table@^8.20.0 @tanstack/react-virtual@^3.10.8
 ```
+
+See [COMPATIBILITY.md](./COMPATIBILITY.md) for detailed version requirements.
 
 ### Issue: Git authentication failures
 
