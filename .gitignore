@@ -39,6 +39,11 @@ yarn-error.log*
 .npmrc.local
 *-credentials.json
 
+# distribution archives
+*.tar.gz
+*.zip
+*.bundle
+
 # vercel
 .vercel
 
