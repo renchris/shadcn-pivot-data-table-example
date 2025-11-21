@@ -560,7 +560,8 @@ var DraggableFieldComponent = ({
   field,
   fieldType = "string",
   sourceZone = "available",
-  onRemove
+  onRemove,
+  inUse = false
 }) => {
   const ref = react.useRef(null);
   const [dragState, setDragState] = react.useState({ type: "idle" });
@@ -610,12 +611,14 @@ var DraggableFieldComponent = ({
         variant: "outline",
         className: chunkQSC4UIVT_js.cn(
           "cursor-move select-none transition-all hover:bg-accent gap-1",
-          dragState.type === "dragging" && "opacity-50 cursor-grabbing"
+          dragState.type === "dragging" && "opacity-50 cursor-grabbing",
+          inUse && "bg-primary/10 border-primary/30"
         ),
         children: [
           /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-1.5", children: [
             getFieldIcon(),
-            /* @__PURE__ */ jsxRuntime.jsx("span", { className: "font-medium", children: formatFieldName2(field) })
+            /* @__PURE__ */ jsxRuntime.jsx("span", { className: "font-medium", children: formatFieldName2(field) }),
+            inUse && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-[10px] font-semibold text-primary", children: "IN USE" })
           ] }),
           sourceZone !== "available" && onRemove && /* @__PURE__ */ jsxRuntime.jsx(
             Button,
@@ -706,7 +709,7 @@ var DropZoneComponent = ({
   ] });
 };
 var DropZone = react.memo(DropZoneComponent);
-function PivotPanel({ config, availableFields, onConfigChange }) {
+function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) {
   const router = navigation.useRouter();
   const pathname = navigation.usePathname();
   const [isPending, startTransition] = react.useTransition();
@@ -724,7 +727,10 @@ function PivotPanel({ config, availableFields, onConfigChange }) {
       ...config.columnFields,
       ...config.valueFields.map((v) => v.field)
     ]);
-    return availableFields.filter((f) => !usedFields.has(f.name));
+    return availableFields.map((f) => ({
+      ...f,
+      inUse: usedFields.has(f.name)
+    }));
   }, [config, availableFields]);
   const updateURLImmediate = react.useCallback((newConfig) => {
     const params = new URLSearchParams();
@@ -792,26 +798,12 @@ function PivotPanel({ config, availableFields, onConfigChange }) {
     updateURLDebounced(newConfig);
   }, [config, onConfigChange, updateURLDebounced]);
   const handleReset = react.useCallback(() => {
-    const defaultConfig = {
-      rowFields: ["region"],
-      columnFields: ["quarter"],
-      valueFields: [
-        { field: "sales", aggregation: "sum", displayName: "Total Sales" },
-        { field: "units", aggregation: "sum", displayName: "Total Units" }
-      ],
-      options: {
-        showRowTotals: true,
-        showColumnTotals: true,
-        showGrandTotal: true,
-        expandedByDefault: false
-      }
-    };
     onConfigChange(defaultConfig);
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
     updateURLImmediate(defaultConfig);
-  }, [onConfigChange, updateURLImmediate]);
+  }, [defaultConfig, onConfigChange, updateURLImmediate]);
   return /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
     /* @__PURE__ */ jsxRuntime.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center justify-between", children: [
       /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
@@ -835,10 +827,11 @@ function PivotPanel({ config, availableFields, onConfigChange }) {
           {
             field: field.name,
             fieldType: field.type,
-            sourceZone: "available"
+            sourceZone: "available",
+            inUse: field.inUse
           },
           field.name
-        )) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground w-full text-center", children: "All fields are currently in use" }) })
+        )) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground w-full text-center", children: "No fields available" }) })
       ] }),
       /* @__PURE__ */ jsxRuntime.jsx(Separator, {}),
       /* @__PURE__ */ jsxRuntime.jsx(
@@ -885,52 +878,6 @@ function PivotPanel({ config, availableFields, onConfigChange }) {
           index
         )) })
       ] })
-    ] })
-  ] });
-}
-function ClientPivotWrapper({
-  rawData,
-  initialConfig,
-  availableFields
-}) {
-  const [config, setConfig] = react.useState(initialConfig);
-  const pivotResult = react.useMemo(() => {
-    const startTime = performance.now();
-    const result = chunk74OBHZM5_js.transformToPivot(rawData, config);
-    const endTime = performance.now();
-    console.log(`Client-side pivot transformation: ${(endTime - startTime).toFixed(2)}ms`);
-    return result;
-  }, [rawData, config]);
-  const handleConfigChange = react.useCallback((newConfig) => {
-    setConfig(newConfig);
-  }, []);
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "space-y-6", children: [
-    /* @__PURE__ */ jsxRuntime.jsx(
-      PivotPanel,
-      {
-        config,
-        availableFields,
-        onConfigChange: handleConfigChange
-      }
-    ),
-    /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(CardHeader, { children: [
-        /* @__PURE__ */ jsxRuntime.jsx(CardTitle, { children: "Results" }),
-        /* @__PURE__ */ jsxRuntime.jsxs(CardDescription, { children: [
-          pivotResult.metadata.rowCount,
-          " rows \xD7 ",
-          pivotResult.metadata.columnCount,
-          " columns"
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntime.jsx(CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(
-        PivotTable,
-        {
-          data: pivotResult.data,
-          config,
-          metadata: pivotResult.metadata
-        }
-      ) })
     ] })
   ] });
 }
@@ -1181,6 +1128,57 @@ function ExportDialog({ data, filename = "pivot-export" }) {
           "Export"
         ] }) })
       ] })
+    ] })
+  ] });
+}
+function ClientPivotWrapper({
+  rawData,
+  initialConfig,
+  defaultConfig,
+  availableFields
+}) {
+  const [config, setConfig] = react.useState(initialConfig);
+  const pivotResult = react.useMemo(() => {
+    const startTime = performance.now();
+    const result = chunk74OBHZM5_js.transformToPivot(rawData, config);
+    const endTime = performance.now();
+    console.log(`Client-side pivot transformation: ${(endTime - startTime).toFixed(2)}ms`);
+    return result;
+  }, [rawData, config]);
+  const handleConfigChange = react.useCallback((newConfig) => {
+    setConfig(newConfig);
+  }, []);
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "space-y-6", children: [
+    /* @__PURE__ */ jsxRuntime.jsx(
+      PivotPanel,
+      {
+        config,
+        defaultConfig,
+        availableFields,
+        onConfigChange: handleConfigChange
+      }
+    ),
+    /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-start justify-between", children: [
+        /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntime.jsx(CardTitle, { children: "Results" }),
+          /* @__PURE__ */ jsxRuntime.jsxs(CardDescription, { children: [
+            pivotResult.metadata.rowCount,
+            " rows \xD7 ",
+            pivotResult.metadata.columnCount,
+            " columns"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntime.jsx(ExportDialog, { data: pivotResult.data, filename: "pivot-export" })
+      ] }) }),
+      /* @__PURE__ */ jsxRuntime.jsx(CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(
+        PivotTable,
+        {
+          data: pivotResult.data,
+          config,
+          metadata: pivotResult.metadata
+        }
+      ) })
     ] })
   ] });
 }

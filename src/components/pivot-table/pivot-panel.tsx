@@ -15,18 +15,24 @@ import type { PivotConfig } from '../../lib/pivot/schemas'
 import { DraggableField } from './draggable-field'
 import { DropZone } from './drop-zone'
 import { Settings2, RefreshCw, Loader2 } from 'lucide-react'
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { cn } from '../../lib/utils'
 
 interface PivotPanelProps {
   config: PivotConfig // Controlled component - no longer initialConfig
+  defaultConfig: PivotConfig // Scenario's default config for reset
   availableFields: Array<{ name: string; type: string }>
   onConfigChange: (config: PivotConfig) => void // Required for controlled component
 }
 
-export function PivotPanel({ config, availableFields, onConfigChange }: PivotPanelProps) {
+export function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }: PivotPanelProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const [isAvailableDraggedOver, setIsAvailableDraggedOver] = useState(false)
 
+  // Refs
+  const availableFieldsRef = useRef<HTMLDivElement>(null)
   // Debounce timeout ref to prevent multiple rapid URL updates
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -39,7 +45,8 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
     }
   }, [])
 
-  // Filter out fields already in use
+  // Show ALL fields, even if already in use (better UX - allows seeing and re-dragging)
+  // Previously filtered out used fields, but this hid fields and confused users
   const getAvailableFields = useCallback(() => {
     const usedFields = new Set([
       ...config.rowFields,
@@ -47,7 +54,11 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
       ...config.valueFields.map(v => v.field),
     ])
 
-    return availableFields.filter(f => !usedFields.has(f.name))
+    // Return all fields with indicator of whether they're in use
+    return availableFields.map(f => ({
+      ...f,
+      inUse: usedFields.has(f.name),
+    }))
   }, [config, availableFields])
 
   // Immediate URL update (non-debounced) - used for initial load and reset
@@ -152,30 +163,63 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
     updateURLDebounced(newConfig)
   }, [config, onConfigChange, updateURLDebounced])
 
-  // Reset to default configuration
-  const handleReset = useCallback(() => {
-    const defaultConfig: PivotConfig = {
-      rowFields: ['region'],
-      columnFields: ['quarter'],
-      valueFields: [
-        { field: 'sales', aggregation: 'sum', displayName: 'Total Sales' },
-        { field: 'units', aggregation: 'sum', displayName: 'Total Units' },
-      ],
-      options: {
-        showRowTotals: true,
-        showColumnTotals: true,
-        showGrandTotal: true,
-        expandedByDefault: false,
+  // Handle field drop into available fields (removes from rows/columns)
+  const handleReturnToAvailable = useCallback(
+    (fieldName: string, sourceZone?: 'available' | 'rows' | 'columns') => {
+      // If already in available (dragging within same zone), do nothing
+      if (sourceZone === 'available') {
+        return
+      }
+
+      let newConfig = { ...config }
+
+      // Remove from source zone
+      if (sourceZone === 'rows') {
+        newConfig.rowFields = newConfig.rowFields.filter((f) => f !== fieldName)
+      } else if (sourceZone === 'columns') {
+        newConfig.columnFields = newConfig.columnFields.filter((f) => f !== fieldName)
+      }
+
+      // Single state update
+      onConfigChange(newConfig)
+      updateURLDebounced(newConfig)
+    },
+    [config, onConfigChange, updateURLDebounced]
+  )
+
+  // Set up drop target for Available Fields
+  useEffect(() => {
+    const el = availableFieldsRef.current
+    if (!el) return
+
+    return dropTargetForElements({
+      element: el,
+      onDragEnter: () => setIsAvailableDraggedOver(true),
+      onDragLeave: () => setIsAvailableDraggedOver(false),
+      onDrop: ({ source }) => {
+        setIsAvailableDraggedOver(false)
+        const data = source.data as {
+          field: string
+          fieldType?: string
+          sourceZone?: 'available' | 'rows' | 'columns'
+        }
+        if (data.field) {
+          handleReturnToAvailable(data.field, data.sourceZone)
+        }
       },
-    }
-    // Single state update - no more duplicate setConfig
+    })
+  }, [handleReturnToAvailable])
+
+  // Reset to scenario's default configuration
+  const handleReset = useCallback(() => {
+    // Use the scenario's default config instead of hardcoded values
     onConfigChange(defaultConfig)
     // Cancel any pending debounced updates
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
     }
     updateURLImmediate(defaultConfig) // Immediate update for reset
-  }, [onConfigChange, updateURLImmediate])
+  }, [defaultConfig, onConfigChange, updateURLImmediate])
 
   return (
     <Card>
@@ -205,7 +249,18 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
         {/* Available Fields */}
         <div>
           <h3 className="text-sm font-medium mb-3">Available Fields</h3>
-          <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border-2 border-dashed rounded-lg bg-muted/20">
+          <p className="text-sm text-muted-foreground mb-3">
+            Drag fields here to remove them from the pivot
+          </p>
+          <div
+            ref={availableFieldsRef}
+            className={cn(
+              'flex flex-wrap gap-2 min-h-[60px] p-3 border-2 border-dashed rounded-lg transition-colors',
+              isAvailableDraggedOver
+                ? 'border-primary bg-primary/5'
+                : 'border-muted-foreground/25 bg-muted/20'
+            )}
+          >
             {getAvailableFields().length > 0 ? (
               getAvailableFields().map(field => (
                 <DraggableField
@@ -213,11 +268,12 @@ export function PivotPanel({ config, availableFields, onConfigChange }: PivotPan
                   field={field.name}
                   fieldType={field.type}
                   sourceZone="available"
+                  inUse={field.inUse}
                 />
               ))
             ) : (
               <p className="text-sm text-muted-foreground w-full text-center">
-                All fields are currently in use
+                No fields available
               </p>
             )}
           </div>

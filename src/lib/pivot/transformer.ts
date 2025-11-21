@@ -46,6 +46,19 @@ export function transformToPivot(
     }
   }
 
+  // Handle unpivoted view - return raw data when no fields configured
+  if (config.rowFields.length === 0 && config.columnFields.length === 0) {
+    return {
+      data: rawData,
+      metadata: {
+        rowCount: rawData.length,
+        columnCount: Object.keys(rawData[0] || {}).length,
+        uniqueValues: {},
+      },
+      config,
+    }
+  }
+
   // Step 1: Group data by row fields
   const grouped = groupByFields(rawData, config.rowFields)
 

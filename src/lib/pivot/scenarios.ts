@@ -11,6 +11,7 @@ export interface ScenarioConfig {
   title: string
   description: string
   category: 'finance' | 'general'
+  businessValue?: string // Business value/use case for this configuration
   defaultConfig: PivotConfig
 }
 
@@ -20,34 +21,25 @@ export const scenarios: Record<string, ScenarioConfig> = {
     title: 'Market Data OHLC Analysis',
     description: 'Intraday OHLC (Open, High, Low, Close) analysis for 5 major tech stocks across 4 time periods',
     category: 'finance',
+    businessValue: 'Algorithmic Trading Timing Strategy - Identify optimal execution times by comparing all stocks side-by-side at each time bucket. Reveals liquidity patterns and enables VWAP execution calibration.',
     defaultConfig: {
-      rowFields: ['symbol', 'timeBucket'],
+      rowFields: [],
       columnFields: [],
       valueFields: [
-        {
-          field: 'open',
-          aggregation: 'first',
-          displayName: 'Open',
-        },
-        {
-          field: 'high',
-          aggregation: 'max',
-          displayName: 'High',
-        },
-        {
-          field: 'low',
-          aggregation: 'min',
-          displayName: 'Low',
-        },
-        {
-          field: 'close',
-          aggregation: 'last',
-          displayName: 'Close',
-        },
         {
           field: 'volume',
           aggregation: 'sum',
           displayName: 'Volume',
+        },
+        {
+          field: 'close',
+          aggregation: 'last',
+          displayName: 'Last Price',
+        },
+        {
+          field: 'vwap',
+          aggregation: 'avg',
+          displayName: 'VWAP',
         },
       ],
       options: {
@@ -64,8 +56,9 @@ export const scenarios: Record<string, ScenarioConfig> = {
     title: 'Trading Desk P&L Analysis',
     description: 'Profit & Loss analysis across 3 trading desks (Equities, Fixed Income, FX) with 7 traders and 15 trades',
     category: 'finance',
+    businessValue: 'Risk Management & Capital Allocation - Exposes instrument-level concentration risks across trading desks. Identifies which securities drive firm profitability and enables position limit optimization.',
     defaultConfig: {
-      rowFields: ['desk', 'trader'],
+      rowFields: [],
       columnFields: [],
       valueFields: [
         {
@@ -74,21 +67,21 @@ export const scenarios: Record<string, ScenarioConfig> = {
           displayName: 'Total P&L',
         },
         {
-          field: 'quantity',
-          aggregation: 'sum',
-          displayName: 'Total Volume',
+          field: 'pnl',
+          aggregation: 'count',
+          displayName: 'Trade Count',
         },
         {
           field: 'pnl',
           aggregation: 'avg',
-          displayName: 'Avg P&L per Trade',
+          displayName: 'Avg P&L',
         },
       ],
       options: {
         expandedByDefault: false,
-        showRowTotals: true,
+        showRowTotals: false,
         showColumnTotals: false,
-        showGrandTotal: true,
+        showGrandTotal: false,
       },
     },
   },
@@ -98,19 +91,20 @@ export const scenarios: Record<string, ScenarioConfig> = {
     title: 'Bond Portfolio Analysis',
     description: 'Fixed income portfolio analysis across 3 portfolios (Conservative, Balanced, Aggressive) with 12 bonds',
     category: 'finance',
+    businessValue: 'Laddered Portfolio Rebalancing - Reveals duration/credit quality distribution through maturity×rating matrix. Identifies rating gaps and enables yield optimization while managing interest rate risk.',
     defaultConfig: {
-      rowFields: ['portfolio', 'sector'],
+      rowFields: [],
       columnFields: [],
       valueFields: [
         {
           field: 'marketValue',
           aggregation: 'sum',
-          displayName: 'Total Market Value',
+          displayName: 'Market Value',
         },
         {
-          field: 'duration',
-          aggregation: 'avg',
-          displayName: 'Avg Duration',
+          field: 'bondId',
+          aggregation: 'count',
+          displayName: 'Bond Count',
         },
         {
           field: 'ytm',
@@ -120,9 +114,9 @@ export const scenarios: Record<string, ScenarioConfig> = {
       ],
       options: {
         expandedByDefault: false,
-        showRowTotals: true,
+        showRowTotals: false,
         showColumnTotals: false,
-        showGrandTotal: true,
+        showGrandTotal: false,
       },
     },
   },
@@ -132,41 +126,37 @@ export const scenarios: Record<string, ScenarioConfig> = {
     title: 'Options Portfolio Greeks',
     description: 'Options portfolio risk analysis across 4 strategies with delta, gamma, vega, and theta exposure',
     category: 'finance',
+    businessValue: 'Options Risk Management & Vega Hedging - Exposes underlying-specific Greek concentrations by strategy. Detects volatility clustering and enables targeted hedging of single-name exposure.',
     defaultConfig: {
-      rowFields: ['strategy', 'expiryBucket'],
+      rowFields: [],
       columnFields: [],
       valueFields: [
         {
           field: 'delta',
           aggregation: 'sum',
-          displayName: 'Total Delta',
-        },
-        {
-          field: 'gamma',
-          aggregation: 'sum',
-          displayName: 'Total Gamma',
+          displayName: 'Net Delta',
         },
         {
           field: 'vega',
           aggregation: 'sum',
-          displayName: 'Total Vega',
+          displayName: 'Net Vega',
         },
         {
-          field: 'theta',
-          aggregation: 'sum',
-          displayName: 'Total Theta',
+          field: 'impliedVol',
+          aggregation: 'avg',
+          displayName: 'Avg IV',
         },
         {
           field: 'contracts',
           aggregation: 'sum',
-          displayName: 'Total Contracts',
+          displayName: 'Contracts',
         },
       ],
       options: {
         expandedByDefault: false,
-        showRowTotals: true,
+        showRowTotals: false,
         showColumnTotals: false,
-        showGrandTotal: true,
+        showGrandTotal: false,
       },
     },
   },
@@ -176,36 +166,32 @@ export const scenarios: Record<string, ScenarioConfig> = {
     title: 'Risk Management (VaR)',
     description: 'Portfolio Value-at-Risk analysis across 4 asset classes and 3 regions with 15 positions',
     category: 'finance',
+    businessValue: 'Portfolio Risk Optimization & Geographic Rebalancing - Creates risk heat map by asset class×region. Reveals geographic concentration and enables optimization of risk-adjusted allocations.',
     defaultConfig: {
-      rowFields: ['assetClass', 'region'],
+      rowFields: [],
       columnFields: [],
       valueFields: [
-        {
-          field: 'var95',
-          aggregation: 'sum',
-          displayName: 'VaR 95% (Sum)',
-        },
-        {
-          field: 'var99',
-          aggregation: 'sum',
-          displayName: 'VaR 99% (Sum)',
-        },
         {
           field: 'marketValue',
           aggregation: 'sum',
           displayName: 'Market Value',
         },
         {
-          field: 'volatility',
+          field: 'var95',
+          aggregation: 'sum',
+          displayName: 'VaR 95%',
+        },
+        {
+          field: 'beta',
           aggregation: 'avg',
-          displayName: 'Avg Volatility',
+          displayName: 'Avg Beta',
         },
       ],
       options: {
         expandedByDefault: false,
-        showRowTotals: true,
+        showRowTotals: false,
         showColumnTotals: false,
-        showGrandTotal: true,
+        showGrandTotal: false,
       },
     },
   },

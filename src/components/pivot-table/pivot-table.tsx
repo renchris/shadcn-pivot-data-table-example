@@ -58,10 +58,35 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
   const columns = useMemo<ColumnDef<PivotRow>[]>(() => {
     const cols: ColumnDef<PivotRow>[] = []
 
+    // Unpivoted view - show all raw data columns
+    if (config.rowFields.length === 0 && config.columnFields.length === 0) {
+      const firstRow = data[0]
+      if (firstRow) {
+        // Get unique keys and filter out internal fields
+        const allKeys = [...new Set(Object.keys(firstRow))].filter(key => !key.startsWith('__'))
+
+        return allKeys.map((key, index) => ({
+          id: `unpivoted_${key}_${index}`, // Ensure unique ID
+          accessorFn: (row: any) => row[key], // Use accessor function instead of accessorKey
+          header: formatFieldName(key),
+          cell: ({ getValue }) => {
+            const value = getValue()
+            // Format based on type detection
+            if (typeof value === 'number') {
+              return <div className="text-right font-mono">{value.toLocaleString()}</div>
+            }
+            return <div className="text-left">{String(value ?? '')}</div>
+          },
+          size: 150,
+        }))
+      }
+      return []
+    }
+
     // Add row field columns
     for (const field of config.rowFields) {
       cols.push({
-        id: field,
+        id: `row_${field}`,
         accessorKey: field,
         header: formatFieldName(field),
         cell: ({ row, getValue }) => {
@@ -90,7 +115,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
       // No pivot columns - simple value columns
       for (const valueField of config.valueFields) {
         cols.push({
-          id: valueField.field,
+          id: `value_${valueField.field}`,
           accessorKey: valueField.displayName || valueField.field,
           header: valueField.displayName || formatFieldName(valueField.field),
           cell: ({ getValue }) => {
@@ -114,7 +139,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
 
         // Create column group
         const groupColumns: ColumnDef<PivotRow>[] = config.valueFields.map(valueField => ({
-          id: generateColumnKey(combination, valueField.displayName || valueField.field),
+          id: `pivot_${generateColumnKey(combination, valueField.displayName || valueField.field)}`,
           accessorKey: generateColumnKey(combination, valueField.displayName || valueField.field),
           header: valueField.displayName || formatFieldName(valueField.field),
           cell: ({ getValue, row }) => {

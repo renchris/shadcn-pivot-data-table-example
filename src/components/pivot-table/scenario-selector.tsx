@@ -41,13 +41,14 @@ export function ScenarioSelector() {
     // Guard: only allow navigation after initialization completes
     if (!isInitialized) return
 
-    // Canonical Next.js App Router pattern for updating search params
-    const params = new URLSearchParams(searchParams.toString())
+    // Create FRESH params - clear all old config (rows, columns, etc.) from previous scenario
+    // This ensures each scenario loads with its proper default configuration
+    const params = new URLSearchParams()
     params.set('scenario', scenarioId)
 
     // Use pathname + query string (never hardcode the route)
     router.push(pathname + '?' + params.toString())
-  }, [isInitialized, router, pathname, searchParams])
+  }, [isInitialized, router, pathname])
 
   return (
     <Card>
@@ -83,6 +84,12 @@ export function ScenarioSelector() {
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <h4 className="text-sm font-semibold">{scenario.title}</h4>
           <p className="text-sm text-muted-foreground">{scenario.description}</p>
+          {scenario.businessValue && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <p className="text-xs font-medium text-primary mb-1">💡 Business Value:</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{scenario.businessValue}</p>
+            </div>
+          )}
         </div>
 
         <div className="text-xs text-muted-foreground space-y-1">
@@ -92,7 +99,7 @@ export function ScenarioSelector() {
           </div>
           {scenario.defaultConfig.columnFields.length > 0 && (
             <div>
-              <span className="font-medium">Column Fields:</span>{' '}
+              <span className="font-medium">Pivot Columns:</span>{' '}
               {scenario.defaultConfig.columnFields.join(', ')}
             </div>
           )}

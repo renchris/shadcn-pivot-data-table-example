@@ -11,6 +11,7 @@ import type { PivotConfig } from '../../lib/pivot/schemas'
 interface ClientPivotWrapperProps {
   rawData: any[]
   initialConfig: PivotConfig
+  defaultConfig: PivotConfig // Scenario's default config for reset functionality
   availableFields: Array<{ name: string; type: string }>
 }
 
@@ -21,6 +22,7 @@ interface ClientPivotWrapperProps {
 export function ClientPivotWrapper({
   rawData,
   initialConfig,
+  defaultConfig,
   availableFields,
 }: ClientPivotWrapperProps) {
   // Store config in local state for instant updates
@@ -48,6 +50,7 @@ export function ClientPivotWrapper({
       {/* Configuration Panel */}
       <PivotPanel
         config={config}
+        defaultConfig={defaultConfig}
         availableFields={availableFields}
         onConfigChange={handleConfigChange}
       />
@@ -57,7 +60,14 @@ export function ClientPivotWrapper({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle>Results</CardTitle>
+              <CardTitle>
+                Results
+                {config.rowFields.length === 0 && config.columnFields.length === 0 && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    (Unpivoted - Raw Data)
+                  </span>
+                )}
+              </CardTitle>
               <CardDescription>
                 {pivotResult.metadata.rowCount} rows × {pivotResult.metadata.columnCount} columns
               </CardDescription>

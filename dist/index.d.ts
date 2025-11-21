@@ -32,17 +32,19 @@ declare const PivotTable: React$1.MemoExoticComponent<({ data, config, metadata 
 
 interface PivotPanelProps {
     config: PivotConfig;
+    defaultConfig: PivotConfig;
     availableFields: Array<{
         name: string;
         type: string;
     }>;
     onConfigChange: (config: PivotConfig) => void;
 }
-declare function PivotPanel({ config, availableFields, onConfigChange }: PivotPanelProps): react_jsx_runtime.JSX.Element;
+declare function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }: PivotPanelProps): react_jsx_runtime.JSX.Element;
 
 interface ClientPivotWrapperProps {
     rawData: any[];
     initialConfig: PivotConfig;
+    defaultConfig: PivotConfig;
     availableFields: Array<{
         name: string;
         type: string;
@@ -52,19 +54,20 @@ interface ClientPivotWrapperProps {
  * Client-side pivot wrapper that performs instant transformations
  * This achieves AG Grid-level performance (50-80ms) by avoiding server round-trips
  */
-declare function ClientPivotWrapper({ rawData, initialConfig, availableFields, }: ClientPivotWrapperProps): react_jsx_runtime.JSX.Element;
+declare function ClientPivotWrapper({ rawData, initialConfig, defaultConfig, availableFields, }: ClientPivotWrapperProps): react_jsx_runtime.JSX.Element;
 
 interface DraggableFieldProps {
     field: string;
     fieldType?: string;
     sourceZone?: 'available' | 'rows' | 'columns';
     onRemove?: () => void;
+    inUse?: boolean;
 }
 /**
  * Memoized DraggableField component to prevent unnecessary re-renders
  * Only re-renders when field, fieldType, sourceZone, or onRemove changes
  */
-declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
+declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove, inUse }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
 
 interface DropZoneProps {
     label: string;

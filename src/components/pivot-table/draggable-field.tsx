@@ -20,13 +20,15 @@ interface DraggableFieldProps {
   fieldType?: string
   sourceZone?: 'available' | 'rows' | 'columns'
   onRemove?: () => void
+  inUse?: boolean // Indicates if field is already used in rows/columns/values
 }
 
 const DraggableFieldComponent = ({
   field,
   fieldType = 'string',
   sourceZone = 'available',
-  onRemove
+  onRemove,
+  inUse = false
 }: DraggableFieldProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [dragState, setDragState] = useState<DragState>({ type: 'idle' })
@@ -80,12 +82,16 @@ const DraggableFieldComponent = ({
           variant="outline"
           className={cn(
             'cursor-move select-none transition-all hover:bg-accent gap-1',
-            dragState.type === 'dragging' && 'opacity-50 cursor-grabbing'
+            dragState.type === 'dragging' && 'opacity-50 cursor-grabbing',
+            inUse && 'bg-primary/10 border-primary/30'
           )}
         >
           <span className="flex items-center gap-1.5">
             {getFieldIcon()}
             <span className="font-medium">{formatFieldName(field)}</span>
+            {inUse && (
+              <span className="text-[10px] font-semibold text-primary">IN USE</span>
+            )}
           </span>
           {sourceZone !== 'available' && onRemove && (
             <Button

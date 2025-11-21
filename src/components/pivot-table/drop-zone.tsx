@@ -11,7 +11,7 @@ interface DropZoneProps {
   fields: string[]
   onFieldAdd: (field: string, sourceZone?: 'available' | 'rows' | 'columns') => void
   onFieldRemove: (field: string) => void
-  zone: 'rows' | 'columns'
+  zone: 'rows' | 'columns' | 'available'
   availableFields: Array<{ name: string; type: string }>
 }
 

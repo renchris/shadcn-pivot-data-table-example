@@ -307,6 +307,39 @@ This script:
 - Updates `package.json` for publishing (`private: false`)
 - Commits changes with sync reference
 
+## 🐛 Debugging
+
+### Server-Side Debugging (Browser DevTools)
+
+The dev server runs with `--inspect` enabled by default, allowing you to debug server-side code:
+
+**Chrome DevTools:**
+1. Run `bun dev`
+2. Open `chrome://inspect` in Chrome
+3. Click **inspect** under your Next.js app in Remote Targets
+4. Server-side code will appear in the Sources tab
+
+**Quick Access from Error Overlay:**
+- When a server error occurs, click the Node.js icon in the error overlay
+- This copies the DevTools URL to your clipboard for instant debugging
+
+**Bun Note:** The debugger runs on port **6499** (Bun's inspector port), not Node.js's standard 9229.
+
+### Client-Side Debugging
+
+Debug React components and client code in your browser:
+- **Chrome**: Open DevTools (`⌥+⌘+I` on macOS, `Ctrl+Shift+J` on Windows/Linux)
+- **Firefox**: Open Developer Tools (`⌥+⌘+I` on macOS, `Ctrl+Shift+I` on Windows/Linux)
+
+### VS Code Debugging
+
+Three launch configurations are available in `.vscode/launch.json`:
+- **Next.js: debug client-side** - Launch Chrome with debugger attached
+- **Next.js: debug server-side (Bun)** - Attach to Bun's inspector on port 6499
+- **Next.js: debug full stack** - Launch both client and server debuggers
+
+Press `F5` or use the Debug panel (`Ctrl+Shift+D` / `⇧+⌘+D`) to start debugging.
+
 ## 🏗️ Architecture Decisions
 
 This repository uses a **hybrid structure** that optimizes for both demo and library usage:

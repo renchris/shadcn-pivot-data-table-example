@@ -67,7 +67,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "dev": "bun --bun next dev",
+    "dev": "bun --bun --inspect next dev",
     "dev:lib": "tsup --watch",
     "build": "tsup",
     "build:demo": "next build",

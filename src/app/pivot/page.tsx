@@ -73,10 +73,14 @@ async function ClientPivotDataFetcher({ config, scenario }: { config: PivotConfi
     getAvailableFields(scenario),
   ])
 
+  // Get scenario's default config for reset functionality
+  const scenarioConfig = getScenario(scenario)
+
   return (
     <ClientPivotWrapper
       rawData={rawData}
       initialConfig={config}
+      defaultConfig={scenarioConfig.defaultConfig}
       availableFields={availableFields}
     />
   )
