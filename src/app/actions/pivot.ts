@@ -37,40 +37,57 @@ export async function fetchRawData(scenario?: string): Promise<any[]> {
 /**
  * Fetch data from source
  * Routes to appropriate dataset based on scenario
+ *
+ * Wrapped in React cache() to deduplicate requests within the same render.
+ * This prevents loading the same dataset multiple times when both fetchRawData
+ * and getAvailableFields are called in parallel.
  */
-async function fetchDataSource(scenario?: string): Promise<any[]> {
+const fetchDataSource = cache(async (scenario?: string): Promise<any[]> => {
+  const startTime = performance.now()
+
   // Route to scenario-specific test fixtures
+  let data: any[]
   switch (scenario) {
     case 'market-data': {
       const { marketData } = await import('@/__tests__/fixtures/market-data')
-      return marketData
+      data = marketData
+      break
     }
 
     case 'trading-pnl': {
       const { tradingData } = await import('@/__tests__/fixtures/trading-data')
-      return tradingData
+      data = tradingData
+      break
     }
 
     case 'bond-portfolio': {
       const { bondData } = await import('@/__tests__/fixtures/bond-data')
-      return bondData
+      data = bondData
+      break
     }
 
     case 'options-greeks': {
       const { optionsData } = await import('@/__tests__/fixtures/options-data')
-      return optionsData
+      data = optionsData
+      break
     }
 
     case 'risk-var': {
       const { riskData } = await import('@/__tests__/fixtures/risk-data')
-      return riskData
+      data = riskData
+      break
     }
 
     default:
       // Fallback to sample data for development
-      return generateSampleData()
+      data = await generateSampleData()
   }
-}
+
+  const duration = (performance.now() - startTime).toFixed(2)
+  console.log(`🔵 \x1b[34mMISS\x1b[0m  fetchDataSource  ${scenario || 'default'}  \x1b[33m${duration}ms\x1b[0m  ${data.length} rows`)
+
+  return data
+})
 
 /**
  * Generate sample sales data for demonstration
