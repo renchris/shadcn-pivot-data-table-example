@@ -3,6 +3,7 @@ import type { AggregationFunction, PivotConfig, ValueFieldConfig } from './schem
 
 /**
  * Row data with pivot markers
+ * Supports hierarchical structure with parent-child relationships
  */
 export interface PivotRow extends Record<string, any> {
   __id?: string
@@ -11,6 +12,8 @@ export interface PivotRow extends Record<string, any> {
   __level?: number
   __groupKey?: string
   __expanded?: boolean
+  __parentKey?: string // Track parent row for hierarchical relationships
+  subRows?: PivotRow[] // Child rows for hierarchical grouping (TanStack Table native format)
 }
 
 /**

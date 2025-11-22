@@ -1,13 +1,16 @@
 'use client'
 
-import { useMemo, useRef, memo } from 'react'
+import { useMemo, useRef, memo, useState } from 'react'
 import {
   type ColumnDef,
+  type ExpandedState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { ChevronRight, ChevronDown } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -54,6 +57,9 @@ interface PivotTableProps {
 const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
   const parentRef = useRef<HTMLDivElement>(null)
 
+  // Initialize expanded state - all rows expanded by default
+  const [expanded, setExpanded] = useState<ExpandedState>(true)
+
   // Generate column definitions dynamically based on configuration
   const columns = useMemo<ColumnDef<PivotRow>[]>(() => {
     const cols: ColumnDef<PivotRow>[] = []
@@ -67,7 +73,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
 
         return allKeys.map((key, index) => ({
           id: `unpivoted_${key}_${index}`, // Ensure unique ID
-          accessorFn: (row: any) => row[key], // Use accessor function instead of accessorKey
+          accessorFn: (row: PivotRow) => row[key], // Use accessor function instead of accessorKey
           header: formatFieldName(key),
           cell: ({ getValue }) => {
             const value = getValue()
@@ -84,30 +90,91 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
     }
 
     // Add row field columns
-    for (const field of config.rowFields) {
+    // For hierarchical grouping (multiple row fields), only show the first field
+    // with expand/collapse functionality. Child rows will display nested values.
+    if (config.rowFields.length > 1) {
+      // Hierarchical mode - single column with tree structure
       cols.push({
-        id: `row_${field}`,
-        accessorKey: field,
-        header: formatFieldName(field),
+        id: 'row_hierarchy',
+        // Use accessorFn to dynamically select the correct field based on row depth
+        accessorFn: (row) => {
+          // Determine which field to display based on row depth/level
+          const level = row.__level || 0
+          // Cap level to available fields to prevent array out of bounds
+          const fieldIndex = Math.min(level, config.rowFields.length - 1)
+          const field = config.rowFields[fieldIndex]
+          return row[field]
+        },
+        header: config.rowFields.map(formatFieldName).join(' / '),
         cell: ({ row, getValue }) => {
           const value = getValue() as string
-          const level = row.original.__level || 0
+          const level = row.depth // TanStack Table provides row.depth for nested rows
           const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
+          const canExpand = row.getCanExpand()
+          const isExpanded = row.getIsExpanded()
 
           return (
             <div
+              onClick={canExpand ? row.getToggleExpandedHandler() : undefined}
               className={cn(
-                'font-medium',
+                'flex items-center gap-2 transition-all',
+                // Font weight hierarchy based on level
+                level === 0 && canExpand && 'font-semibold',
+                level === 1 && canExpand && 'font-medium',
+                level >= 2 && 'font-normal',
+                // Totals override
                 isTotal && 'font-bold',
-                level > 0 && `pl-${level * 4}`
+                // Enhanced vertical guide for parent rows
+                canExpand && level > 0 && 'border-l-2 border-muted/50 pl-3 hover:border-l-muted',
+                // Cursor pointer for expandable rows
+                canExpand && 'cursor-pointer'
               )}
+              style={{ paddingLeft: `${level * 1.5}rem` }} // 1.5rem = 24px (Ant Design standard)
             >
-              {formatTotalLabel(value)}
+              {canExpand ? (
+                <div className="w-7 flex items-center justify-center shrink-0">
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              ) : (
+                <span className="w-7" />
+              )}
+              <span>{formatTotalLabel(value)}</span>
             </div>
           )
         },
-        size: 200,
+        size: 250,
       })
+    } else {
+      // Flat mode - show each row field as a separate column
+      for (const field of config.rowFields) {
+        cols.push({
+          id: `row_${field}`,
+          accessorKey: field,
+          header: formatFieldName(field),
+          cell: ({ row, getValue }) => {
+            const value = getValue() as string
+            const level = row.original.__level || 0
+            const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
+
+            return (
+              <div
+                className={cn(
+                  'font-medium',
+                  isTotal && 'font-bold',
+                  level > 0 && `pl-${level * 4}`
+                )}
+              >
+                {formatTotalLabel(value)}
+              </div>
+            )
+          },
+          size: 200,
+        })
+      }
     }
 
     // Add value columns (with pivot columns if configured)
@@ -117,11 +184,23 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
         cols.push({
           id: `value_${valueField.field}`,
           accessorKey: valueField.displayName || valueField.field,
-          header: valueField.displayName || formatFieldName(valueField.field),
-          cell: ({ getValue }) => {
+          header: () => (
+            <div className="text-right">
+              {valueField.displayName || formatFieldName(valueField.field)}
+            </div>
+          ),
+          cell: ({ getValue, row }) => {
             const value = getValue() as number
+            const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
+            const canExpand = row.getCanExpand()
             return (
-              <div className="text-right font-mono">
+              <div
+                className={cn(
+                  'text-right font-mono',
+                  isTotal && 'font-bold',
+                  canExpand && !isTotal && 'font-semibold'
+                )}
+              >
                 {formatNumber(value, valueField.aggregation)}
               </div>
             )
@@ -141,15 +220,21 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
         const groupColumns: ColumnDef<PivotRow>[] = config.valueFields.map(valueField => ({
           id: `pivot_${generateColumnKey(combination, valueField.displayName || valueField.field)}`,
           accessorKey: generateColumnKey(combination, valueField.displayName || valueField.field),
-          header: valueField.displayName || formatFieldName(valueField.field),
+          header: () => (
+            <div className="text-right">
+              {valueField.displayName || formatFieldName(valueField.field)}
+            </div>
+          ),
           cell: ({ getValue, row }) => {
             const value = getValue() as number
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
+            const canExpand = row.getCanExpand()
             return (
               <div
                 className={cn(
                   'text-right font-mono',
-                  isTotal && 'font-bold'
+                  isTotal && 'font-bold',
+                  canExpand && !isTotal && 'font-semibold'
                 )}
               >
                 {formatNumber(value, valueField.aggregation)}
@@ -181,7 +266,11 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
         cols.push({
           id: `__total_${valueField.field}`,
           accessorKey: `__total_${valueField.field}`,
-          header: `Total ${valueField.displayName || formatFieldName(valueField.field)}`,
+          header: () => (
+            <div className="text-right">
+              {`Total ${valueField.displayName || formatFieldName(valueField.field)}`}
+            </div>
+          ),
           cell: ({ getValue, row }) => {
             const value = getValue() as number
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal
@@ -202,13 +291,19 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
     }
 
     return cols
-  }, [config, metadata])
+  }, [config, metadata, data])
 
-  // Initialize TanStack Table
+  // Initialize TanStack Table with expansion support
   const table = useReactTable({
     data,
     columns,
+    state: {
+      expanded,
+    },
+    onExpandedChange: setExpanded,
+    getSubRows: (row) => row.subRows, // Tell TanStack Table where to find child rows
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   })
 
   // Initialize row virtualizer (for vertical scrolling)
@@ -246,7 +341,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className="bg-muted font-semibold"
+                    className="bg-muted/40 border-b-2 font-semibold"
                   >
                     {header.isPlaceholder
                       ? null
@@ -271,14 +366,29 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
 
               const isGrandTotal = row.original.__isGrandTotal
               const isSubtotal = row.original.__isSubtotal
+              const level = row.depth
+              const isParent = row.getCanExpand()
 
               return (
                 <TableRow
                   key={row.id}
                   data-index={virtualRow.index}
                   className={cn(
+                    // Base styling - clean white background for leaf rows
+                    'transition-colors border-b',
+                    !isParent && !isGrandTotal && !isSubtotal && 'bg-background',
+
+                    // Parent row backgrounds - stronger "section" effect
+                    isParent && level === 0 && !isGrandTotal && !isSubtotal && 'bg-muted/20 border-t border-t-muted/30',
+                    isParent && level > 0 && !isGrandTotal && !isSubtotal && 'bg-muted/15',
+
+                    // Totals styling (overrides backgrounds)
                     isGrandTotal && 'bg-accent font-bold border-t-2 border-t-border',
-                    isSubtotal && 'bg-muted/30 font-semibold'
+                    isSubtotal && 'bg-muted/30 font-semibold',
+
+                    // Enhanced hover (only for non-total rows)
+                    !isGrandTotal && !isSubtotal && isParent && 'hover:bg-muted/30 hover:shadow-sm',
+                    !isGrandTotal && !isSubtotal && !isParent && 'hover:bg-muted/40 hover:shadow-sm'
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -378,7 +488,7 @@ function formatTotalLabel(value: string): string {
 /**
  * Format number based on aggregation type
  */
-function formatNumber(value: any, aggregation: string): string {
+function formatNumber(value: number | null | undefined, aggregation: string): string {
   if (value === null || value === undefined) return '—'
 
   const num = Number(value)

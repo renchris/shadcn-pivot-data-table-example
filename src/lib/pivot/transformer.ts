@@ -72,8 +72,8 @@ export function transformToPivot(
     config
   )
 
-  // Step 4: Add hierarchical subtotals for grouped data
-  const withSubtotals = config.rowFields.length > 1 && config.options.showRowTotals
+  // Step 4: Add hierarchical structure for grouped data (when multiple row fields exist)
+  const withSubtotals = config.rowFields.length > 1
     ? addHierarchicalSubtotals(pivotedData, rawData, config, uniqueColumnValues)
     : pivotedData
 
@@ -276,6 +276,7 @@ function generatePivotedRows(
 
 /**
  * Add hierarchical subtotals for grouped data
+ * Creates a true parent-child tree structure with parent rows containing subRows array
  */
 function addHierarchicalSubtotals(
   data: PivotRow[],
@@ -287,78 +288,128 @@ function addHierarchicalSubtotals(
     return data
   }
 
-  const result: PivotRow[] = []
-  const parentFields = config.rowFields.slice(0, -1) // All fields except the last one
+  // Build hierarchical structure recursively
+  return buildHierarchicalRows(data, config, 0)
+}
+
+/**
+ * Recursively build hierarchical row structure
+ * @param rows - Flat rows to group
+ * @param config - Pivot configuration
+ * @param level - Current hierarchy level (0 = top level)
+ * @returns Array of parent rows with subRows containing children
+ */
+function buildHierarchicalRows(
+  rows: PivotRow[],
+  config: PivotConfig,
+  level: number
+): PivotRow[] {
+  if (level >= config.rowFields.length - 1) {
+    // Base case: we're at the last row field level, return leaf rows
+    // Update __level so child rows can display the correct field value
+    return rows.map(row => ({ ...row, __level: level }))
+  }
+
+  const currentField = config.rowFields[level]
   const groupMap = new Map<string, PivotRow[]>()
 
-  // Group rows by parent fields
-  for (const row of data) {
-    const key = parentFields.map(field => String(row[field] ?? '')).join('|')
+  // Group rows by current field
+  for (const row of rows) {
+    const key = String(row[currentField] ?? '')
     if (!groupMap.has(key)) {
       groupMap.set(key, [])
     }
     groupMap.get(key)!.push(row)
   }
 
-  // Add rows and subtotals for each group
+  const parentRows: PivotRow[] = []
+
+  // Create parent row for each group
   for (const [groupKey, groupRows] of groupMap.entries()) {
-    // Add all rows in this group
-    result.push(...groupRows)
+    // Recursively build children
+    const children = buildHierarchicalRows(groupRows, config, level + 1)
 
-    // Create subtotal row
-    const subtotalRow: PivotRow = {
-      __id: `${groupKey}__subtotal`,
-      __isSubtotal: true,
-      __level: parentFields.length - 1,
+    // Create parent row with aggregated values
+    const parentRow: PivotRow = {
+      __id: `${currentField}_${groupKey}_level${level}`,
+      __level: level,
+      __groupKey: groupKey,
+      __expanded: config.options.expandedByDefault ?? false,
     }
 
-    // Set parent field values
-    const parentValues = groupKey.split('|')
-    parentFields.forEach((field, index) => {
-      subtotalRow[field] = parentValues[index] || ''
-    })
+    // Set current field value
+    parentRow[currentField] = groupKey
 
-    // Mark last field as total
-    subtotalRow[config.rowFields[config.rowFields.length - 1]] = '__TOTAL__'
+    // Aggregate values from all children (recursively including all descendants)
+    aggregateParentValues(parentRow, groupRows, config)
 
-    // Aggregate values
-    if (config.columnFields.length === 0) {
-      // No pivot columns - aggregate directly
-      for (const valueField of config.valueFields) {
-        const displayName = valueField.displayName || valueField.field
-        const values = groupRows.map(row => row[displayName]).filter(v => v !== null && v !== undefined)
+    // Attach children
+    parentRow.subRows = children
 
-        if (valueField.aggregation === 'sum') {
-          subtotalRow[displayName] = values.reduce((sum, val) => sum + Number(val || 0), 0)
-        } else if (valueField.aggregation === 'count') {
-          subtotalRow[displayName] = values.length
-        } else if (valueField.aggregation === 'avg') {
-          const sum = values.reduce((sum, val) => sum + Number(val || 0), 0)
-          subtotalRow[displayName] = values.length > 0 ? sum / values.length : 0
-        } else if (valueField.aggregation === 'min') {
-          subtotalRow[displayName] = values.length > 0 ? Math.min(...values.map(Number)) : 0
-        } else if (valueField.aggregation === 'max') {
-          subtotalRow[displayName] = values.length > 0 ? Math.max(...values.map(Number)) : 0
-        }
-      }
-    } else {
-      // With pivot columns - aggregate for each column
-      const firstRow = groupRows[0]
-      for (const key of Object.keys(firstRow)) {
-        if (key.startsWith('__')) continue
-        if (config.rowFields.includes(key)) continue
-
-        const values = groupRows.map(row => row[key]).filter(v => v !== null && v !== undefined && !isNaN(Number(v)))
-        if (values.length > 0) {
-          subtotalRow[key] = values.reduce((sum, val) => sum + Number(val), 0)
-        }
-      }
-    }
-
-    result.push(subtotalRow)
+    parentRows.push(parentRow)
   }
 
-  return result
+  return parentRows
+}
+
+/**
+ * Aggregate values for a parent row from all its children
+ * @param parentRow - Parent row to populate with aggregated values
+ * @param childRows - All descendant rows (flat list including all levels)
+ * @param config - Pivot configuration
+ */
+function aggregateParentValues(
+  parentRow: PivotRow,
+  childRows: PivotRow[],
+  config: PivotConfig
+): void {
+  if (config.columnFields.length === 0) {
+    // No pivot columns - aggregate value fields directly
+    for (const valueField of config.valueFields) {
+      const displayName = valueField.displayName || valueField.field
+      const values = childRows
+        .map(row => row[displayName])
+        .filter(v => v !== null && v !== undefined)
+
+      if (valueField.aggregation === 'sum') {
+        parentRow[displayName] = values.reduce((sum, val) => sum + Number(val || 0), 0)
+      } else if (valueField.aggregation === 'count') {
+        parentRow[displayName] = values.length
+      } else if (valueField.aggregation === 'avg') {
+        const sum = values.reduce((sum, val) => sum + Number(val || 0), 0)
+        parentRow[displayName] = values.length > 0 ? sum / values.length : 0
+      } else if (valueField.aggregation === 'min') {
+        parentRow[displayName] = values.length > 0 ? Math.min(...values.map(Number)) : 0
+      } else if (valueField.aggregation === 'max') {
+        parentRow[displayName] = values.length > 0 ? Math.max(...values.map(Number)) : 0
+      } else if (valueField.aggregation === 'first') {
+        parentRow[displayName] = values[0]
+      } else if (valueField.aggregation === 'last') {
+        parentRow[displayName] = values[values.length - 1]
+      } else if (valueField.aggregation === 'median') {
+        const sorted = values.map(Number).sort((a, b) => a - b)
+        const mid = Math.floor(sorted.length / 2)
+        parentRow[displayName] = sorted.length % 2 === 0
+          ? (sorted[mid - 1] + sorted[mid]) / 2
+          : sorted[mid]
+      }
+    }
+  } else {
+    // With pivot columns - aggregate for each dynamically generated column
+    const firstRow = childRows[0]
+    for (const key of Object.keys(firstRow)) {
+      if (key.startsWith('__')) continue
+      if (config.rowFields.includes(key)) continue
+
+      const values = childRows
+        .map(row => row[key])
+        .filter(v => v !== null && v !== undefined && !isNaN(Number(v)))
+
+      if (values.length > 0) {
+        parentRow[key] = values.reduce((sum, val) => sum + Number(val), 0)
+      }
+    }
+  }
 }
 
 /**
