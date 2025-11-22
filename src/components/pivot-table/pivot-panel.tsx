@@ -187,6 +187,70 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
     [config, onConfigChange, updateURLDebounced]
   )
 
+  // Handle row field reordering
+  const handleReorderRowFields = useCallback(
+    (sourceField: string, targetField: string, edge: 'left' | 'right' | 'top' | 'bottom') => {
+      const newFields = [...config.rowFields]
+      const sourceIndex = newFields.indexOf(sourceField)
+      const targetIndex = newFields.indexOf(targetField)
+
+      if (sourceIndex === -1 || targetIndex === -1) return
+
+      // Remove from current position
+      newFields.splice(sourceIndex, 1)
+
+      // Calculate insertion index based on edge
+      let insertIndex = targetIndex
+      if (edge === 'right' || edge === 'bottom') {
+        insertIndex++
+      }
+      // Adjust if source was before target
+      if (sourceIndex < targetIndex) {
+        insertIndex--
+      }
+
+      // Insert at new position
+      newFields.splice(insertIndex, 0, sourceField)
+
+      const newConfig = { ...config, rowFields: newFields }
+      onConfigChange(newConfig)
+      updateURLDebounced(newConfig)
+    },
+    [config, onConfigChange, updateURLDebounced]
+  )
+
+  // Handle column field reordering
+  const handleReorderColumnFields = useCallback(
+    (sourceField: string, targetField: string, edge: 'left' | 'right' | 'top' | 'bottom') => {
+      const newFields = [...config.columnFields]
+      const sourceIndex = newFields.indexOf(sourceField)
+      const targetIndex = newFields.indexOf(targetField)
+
+      if (sourceIndex === -1 || targetIndex === -1) return
+
+      // Remove from current position
+      newFields.splice(sourceIndex, 1)
+
+      // Calculate insertion index based on edge
+      let insertIndex = targetIndex
+      if (edge === 'right' || edge === 'bottom') {
+        insertIndex++
+      }
+      // Adjust if source was before target
+      if (sourceIndex < targetIndex) {
+        insertIndex--
+      }
+
+      // Insert at new position
+      newFields.splice(insertIndex, 0, sourceField)
+
+      const newConfig = { ...config, columnFields: newFields }
+      onConfigChange(newConfig)
+      updateURLDebounced(newConfig)
+    },
+    [config, onConfigChange, updateURLDebounced]
+  )
+
   // Set up drop target for Available Fields
   useEffect(() => {
     const el = availableFieldsRef.current
@@ -288,6 +352,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
           fields={config.rowFields}
           onFieldAdd={handleAddRowField}
           onFieldRemove={(field) => handleRemoveField(field, 'rows')}
+          onFieldReorder={handleReorderRowFields}
           zone="rows"
           availableFields={availableFields}
         />
@@ -301,6 +366,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
           fields={config.columnFields}
           onFieldAdd={handleAddColumnField}
           onFieldRemove={(field) => handleRemoveField(field, 'columns')}
+          onFieldReorder={handleReorderColumnFields}
           zone="columns"
           availableFields={availableFields}
         />

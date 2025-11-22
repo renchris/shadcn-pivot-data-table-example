@@ -21,6 +21,7 @@ interface DraggableFieldProps {
   sourceZone?: 'available' | 'rows' | 'columns'
   onRemove?: () => void
   inUse?: boolean // Indicates if field is already used in rows/columns/values
+  index?: number // Position in the Row Groups/Pivot Columns list (for numbered badges)
 }
 
 const DraggableFieldComponent = ({
@@ -28,7 +29,8 @@ const DraggableFieldComponent = ({
   fieldType = 'string',
   sourceZone = 'available',
   onRemove,
-  inUse = false
+  inUse = false,
+  index
 }: DraggableFieldProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [dragState, setDragState] = useState<DragState>({ type: 'idle' })
@@ -77,7 +79,7 @@ const DraggableFieldComponent = ({
 
   return (
     <>
-      <div ref={ref} className="inline-block group">
+      <div ref={ref} className="inline-block group relative">
         <Badge
           variant="outline"
           className={cn(
@@ -107,6 +109,12 @@ const DraggableFieldComponent = ({
             </Button>
           )}
         </Badge>
+        {/* Numbered badge showing hierarchy position */}
+        {index !== undefined && sourceZone !== 'available' && (
+          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center shadow-sm">
+            {index + 1}
+          </span>
+        )}
       </div>
 
       {/* Render preview via portal - clean Badge without wrapper div */}
