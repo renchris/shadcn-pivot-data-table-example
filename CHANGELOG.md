@@ -1,5 +1,61 @@
 # shadcn-pivot-data-table-example
 
+## 2.1.0
+
+### Minor Changes
+
+- # Field Ordering UX & Visual Hierarchy Improvements
+
+  ## New Features
+
+  ### Field Ordering Visualization & Drag-to-Reorder
+
+  - **Numbered badges** (①②③) show hierarchy order in Row Groups/Pivot Columns
+  - **Drag-to-reorder** fields within same dropzone (no remove/re-add needed)
+  - **Drop indicator lines** show exact insertion position during drag
+  - Follows Excel, Tableau, AG Grid patterns for professional UX
+
+  ### Enhanced Visual Hierarchy
+
+  - **Parent row styling**: Subtle backgrounds distinguish group headers from data rows
+  - **Section borders**: Top borders on parent rows create clear visual blocks
+  - **Refined header**: Clean border-based design (bg-muted/40 with border-b-2)
+  - **Improved indentation**: Reduced to 1.5rem (24px - Ant Design standard)
+  - **Vertical guides**: Border-left on parent rows shows tree structure
+  - **Right-aligned numeric headers**: Headers match data alignment
+
+  ### Improved Expand/Collapse UX
+
+  - **Expand by default**: All rows start expanded for immediate data visibility
+  - **Full row clickable**: Entire parent row toggles expand/collapse (not just chevron)
+  - **Visual indicators**: Smaller chevrons (h-4) with better proportions
+
+  ## Performance Improvements
+
+  ### Server-Side Request Deduplication
+
+  - **React cache()** wrapper eliminates duplicate data loading
+  - **50% faster**: 2 calls → 1 execution per request
+  - **Clean logging**: Color-coded cache behavior (🔵 MISS with timing)
+  - React 19 compatible, future-proof implementation
+
+  ## Technical Changes
+
+  - Add `index` prop to DraggableField for numbered badges
+  - Implement ReorderableField wrapper component for drop targeting
+  - Add reorder handlers in PivotPanel (handleReorderRowFields, handleReorderColumnFields)
+  - Update PivotRow interface with optional fields
+  - Fix transformer hierarchy logic (no longer requires showRowTotals flag)
+  - Convert fetchDataSource to cache-wrapped arrow function
+
+  ## Breaking Changes
+
+  None - all changes are backward compatible
+
+  ## Migration
+
+  No migration needed - features work automatically with existing configurations
+
 ## 2.0.0
 
 ### Major Changes
