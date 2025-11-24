@@ -175,6 +175,7 @@ declare function parseColumnKey(key: string, columnFieldCount: number): {
 
 /**
  * Row data with pivot markers
+ * Supports hierarchical structure with parent-child relationships
  */
 interface PivotRow extends Record<string, any> {
     __id?: string;
@@ -183,6 +184,8 @@ interface PivotRow extends Record<string, any> {
     __level?: number;
     __groupKey?: string;
     __expanded?: boolean;
+    __parentKey?: string;
+    subRows?: PivotRow[];
 }
 /**
  * Field definition for available fields

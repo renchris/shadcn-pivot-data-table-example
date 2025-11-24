@@ -98,6 +98,17 @@ function transformToPivot(rawData, config) {
       config
     };
   }
+  if (config.rowFields.length === 0 && config.columnFields.length === 0) {
+    return {
+      data: rawData,
+      metadata: {
+        rowCount: rawData.length,
+        columnCount: Object.keys(rawData[0] || {}).length,
+        uniqueValues: {}
+      },
+      config
+    };
+  }
   const grouped = groupByFields(rawData, config.rowFields);
   const uniqueColumnValues = extractUniqueValues(rawData, config.columnFields);
   const pivotedData = generatePivotedRows(
@@ -105,7 +116,7 @@ function transformToPivot(rawData, config) {
     uniqueColumnValues,
     config
   );
-  const withSubtotals = config.rowFields.length > 1 && config.options.showRowTotals ? addHierarchicalSubtotals(pivotedData, rawData, config) : pivotedData;
+  const withSubtotals = config.rowFields.length > 1 ? addHierarchicalSubtotals(pivotedData, rawData, config) : pivotedData;
   const withTotals = config.options.showRowTotals || config.options.showColumnTotals ? addTotals(withSubtotals, config, uniqueColumnValues) : withSubtotals;
   const finalData = config.options.showGrandTotal ? addGrandTotal(withTotals, config) : withTotals;
   return {
@@ -215,59 +226,74 @@ function addHierarchicalSubtotals(data, rawData, config, uniqueColumnValues) {
   if (config.rowFields.length <= 1) {
     return data;
   }
-  const result = [];
-  const parentFields = config.rowFields.slice(0, -1);
+  return buildHierarchicalRows(data, config, 0);
+}
+function buildHierarchicalRows(rows, config, level) {
+  if (level >= config.rowFields.length - 1) {
+    return rows.map((row) => ({ ...row, __level: level }));
+  }
+  const currentField = config.rowFields[level];
   const groupMap = /* @__PURE__ */ new Map();
-  for (const row of data) {
-    const key = parentFields.map((field) => String(row[field] ?? "")).join("|");
+  for (const row of rows) {
+    const key = String(row[currentField] ?? "");
     if (!groupMap.has(key)) {
       groupMap.set(key, []);
     }
     groupMap.get(key).push(row);
   }
+  const parentRows = [];
   for (const [groupKey, groupRows] of groupMap.entries()) {
-    result.push(...groupRows);
-    const subtotalRow = {
-      __id: `${groupKey}__subtotal`,
-      __isSubtotal: true,
-      __level: parentFields.length - 1
+    const children = buildHierarchicalRows(groupRows, config, level + 1);
+    const parentRow = {
+      __id: `${currentField}_${groupKey}_level${level}`,
+      __level: level,
+      __groupKey: groupKey,
+      __expanded: config.options.expandedByDefault ?? false
     };
-    const parentValues = groupKey.split("|");
-    parentFields.forEach((field, index) => {
-      subtotalRow[field] = parentValues[index] || "";
-    });
-    subtotalRow[config.rowFields[config.rowFields.length - 1]] = "__TOTAL__";
-    if (config.columnFields.length === 0) {
-      for (const valueField of config.valueFields) {
-        const displayName = valueField.displayName || valueField.field;
-        const values = groupRows.map((row) => row[displayName]).filter((v) => v !== null && v !== void 0);
-        if (valueField.aggregation === "sum") {
-          subtotalRow[displayName] = values.reduce((sum2, val) => sum2 + Number(val || 0), 0);
-        } else if (valueField.aggregation === "count") {
-          subtotalRow[displayName] = values.length;
-        } else if (valueField.aggregation === "avg") {
-          const sum2 = values.reduce((sum3, val) => sum3 + Number(val || 0), 0);
-          subtotalRow[displayName] = values.length > 0 ? sum2 / values.length : 0;
-        } else if (valueField.aggregation === "min") {
-          subtotalRow[displayName] = values.length > 0 ? Math.min(...values.map(Number)) : 0;
-        } else if (valueField.aggregation === "max") {
-          subtotalRow[displayName] = values.length > 0 ? Math.max(...values.map(Number)) : 0;
-        }
-      }
-    } else {
-      const firstRow = groupRows[0];
-      for (const key of Object.keys(firstRow)) {
-        if (key.startsWith("__")) continue;
-        if (config.rowFields.includes(key)) continue;
-        const values = groupRows.map((row) => row[key]).filter((v) => v !== null && v !== void 0 && !isNaN(Number(v)));
-        if (values.length > 0) {
-          subtotalRow[key] = values.reduce((sum2, val) => sum2 + Number(val), 0);
-        }
+    parentRow[currentField] = groupKey;
+    aggregateParentValues(parentRow, groupRows, config);
+    parentRow.subRows = children;
+    parentRows.push(parentRow);
+  }
+  return parentRows;
+}
+function aggregateParentValues(parentRow, childRows, config) {
+  if (config.columnFields.length === 0) {
+    for (const valueField of config.valueFields) {
+      const displayName = valueField.displayName || valueField.field;
+      const values = childRows.map((row) => row[displayName]).filter((v) => v !== null && v !== void 0);
+      if (valueField.aggregation === "sum") {
+        parentRow[displayName] = values.reduce((sum2, val) => sum2 + Number(val || 0), 0);
+      } else if (valueField.aggregation === "count") {
+        parentRow[displayName] = values.length;
+      } else if (valueField.aggregation === "avg") {
+        const sum2 = values.reduce((sum3, val) => sum3 + Number(val || 0), 0);
+        parentRow[displayName] = values.length > 0 ? sum2 / values.length : 0;
+      } else if (valueField.aggregation === "min") {
+        parentRow[displayName] = values.length > 0 ? Math.min(...values.map(Number)) : 0;
+      } else if (valueField.aggregation === "max") {
+        parentRow[displayName] = values.length > 0 ? Math.max(...values.map(Number)) : 0;
+      } else if (valueField.aggregation === "first") {
+        parentRow[displayName] = values[0];
+      } else if (valueField.aggregation === "last") {
+        parentRow[displayName] = values[values.length - 1];
+      } else if (valueField.aggregation === "median") {
+        const sorted = values.map(Number).sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        parentRow[displayName] = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
       }
     }
-    result.push(subtotalRow);
+  } else {
+    const firstRow = childRows[0];
+    for (const key of Object.keys(firstRow)) {
+      if (key.startsWith("__")) continue;
+      if (config.rowFields.includes(key)) continue;
+      const values = childRows.map((row) => row[key]).filter((v) => v !== null && v !== void 0 && !isNaN(Number(v)));
+      if (values.length > 0) {
+        parentRow[key] = values.reduce((sum2, val) => sum2 + Number(val), 0);
+      }
+    }
   }
-  return result;
 }
 function addTotals(data, config, uniqueColumnValues) {
   if (!config.options.showRowTotals && !config.options.showColumnTotals) {
@@ -473,5 +499,5 @@ exports.min = min;
 exports.parseColumnKey = parseColumnKey;
 exports.sum = sum;
 exports.transformToPivot = transformToPivot;
-//# sourceMappingURL=chunk-74OBHZM5.js.map
-//# sourceMappingURL=chunk-74OBHZM5.js.map
+//# sourceMappingURL=chunk-3V676C77.js.map
+//# sourceMappingURL=chunk-3V676C77.js.map

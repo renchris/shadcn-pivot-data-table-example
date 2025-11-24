@@ -1,8 +1,9 @@
-import { e as PivotRow, b as PivotConfig, f as PivotMetadata } from './types-HURo-K0U.mjs';
-export { A as AggregationFn, m as AggregationFunction, i as AggregationFunctionSchema, r as AggregationFunctions, q as CellValue, C as ColumnGroup, n as DragData, D as DropZoneType, d as ExportConfig, k as ExportConfigSchema, E as ExportFormat, j as ExportFormatSchema, F as FieldDefinition, s as FormatFn, u as Formatters, P as PivotConfigSchema, h as PivotMetadataSchema, c as PivotResult, a as PivotResultSchema, o as PivotState, T as TransformOptions, l as ValueFieldConfig, V as ValueFieldConfigSchema, g as generateColumnKey, p as parseColumnKey, t as transformToPivot } from './types-HURo-K0U.mjs';
+import { e as PivotRow, b as PivotConfig, f as PivotMetadata } from './types-B66R_aDx.mjs';
+export { A as AggregationFn, m as AggregationFunction, i as AggregationFunctionSchema, r as AggregationFunctions, q as CellValue, C as ColumnGroup, n as DragData, D as DropZoneType, d as ExportConfig, k as ExportConfigSchema, E as ExportFormat, j as ExportFormatSchema, F as FieldDefinition, s as FormatFn, u as Formatters, P as PivotConfigSchema, h as PivotMetadataSchema, c as PivotResult, a as PivotResultSchema, o as PivotState, T as TransformOptions, l as ValueFieldConfig, V as ValueFieldConfigSchema, g as generateColumnKey, p as parseColumnKey, t as transformToPivot } from './types-B66R_aDx.mjs';
 export { aggregate, aggregationFunctions, avg, cn, count, first, formatAggregationName, getAggregationFunction, last, max, median, min, sum } from './headless.mjs';
 import * as React$1 from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
+import { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import * as class_variance_authority_types from 'class-variance-authority/types';
 import { VariantProps } from 'class-variance-authority';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
@@ -62,12 +63,13 @@ interface DraggableFieldProps {
     sourceZone?: 'available' | 'rows' | 'columns';
     onRemove?: () => void;
     inUse?: boolean;
+    index?: number;
 }
 /**
  * Memoized DraggableField component to prevent unnecessary re-renders
  * Only re-renders when field, fieldType, sourceZone, or onRemove changes
  */
-declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove, inUse }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
+declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove, inUse, index }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
 
 interface DropZoneProps {
     label: string;
@@ -75,7 +77,8 @@ interface DropZoneProps {
     fields: string[];
     onFieldAdd: (field: string, sourceZone?: 'available' | 'rows' | 'columns') => void;
     onFieldRemove: (field: string) => void;
-    zone: 'rows' | 'columns';
+    onFieldReorder?: (sourceField: string, targetField: string, edge: Edge) => void;
+    zone: 'rows' | 'columns' | 'available';
     availableFields: Array<{
         name: string;
         type: string;
@@ -85,7 +88,7 @@ interface DropZoneProps {
  * Memoized DropZone component to prevent unnecessary re-renders
  * Only re-renders when props change (label, description, fields, handlers, zone, availableFields)
  */
-declare const DropZone: React$1.MemoExoticComponent<({ label, description, fields, onFieldAdd, onFieldRemove, zone, availableFields, }: DropZoneProps) => react_jsx_runtime.JSX.Element>;
+declare const DropZone: React$1.MemoExoticComponent<({ label, description, fields, onFieldAdd, onFieldRemove, onFieldReorder, zone, availableFields, }: DropZoneProps) => react_jsx_runtime.JSX.Element>;
 
 interface ExportDialogProps {
     data: any[];
