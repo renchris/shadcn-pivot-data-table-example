@@ -84,6 +84,9 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
             return <div className="text-left">{String(value ?? '')}</div>
           },
           size: 150,
+          meta: {
+            isFirstColumn: index === 0,
+          },
         }))
       }
       return []
@@ -147,10 +150,14 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
           )
         },
         size: 250,
+        meta: {
+          isFirstColumn: true,
+        },
       })
     } else {
       // Flat mode - show each row field as a separate column
       for (const field of config.rowFields) {
+        const isFirstColumn = field === config.rowFields[0]
         cols.push({
           id: `row_${field}`,
           accessorKey: field,
@@ -173,6 +180,9 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
             )
           },
           size: 200,
+          meta: {
+            isFirstColumn,
+          },
         })
       }
     }
@@ -333,31 +343,43 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
         style={{ height: '600px' }}
       >
         <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
+          <TableHeader className="sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    style={{ width: header.getSize() }}
-                    className="bg-muted/40 border-b-2 font-semibold"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header, headerIndex) => {
+                  const isFirstColumn = (header.column.columnDef.meta as { isFirstColumn?: boolean })?.isFirstColumn || headerIndex === 0
+
+                  return (
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{ width: header.getSize() }}
+                      className={cn(
+                        "bg-muted/40 border-b-2 font-semibold",
+                        isFirstColumn
+                          ? "sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                          : "z-10"
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {paddingTop > 0 && (
               <tr>
-                <td style={{ height: `${paddingTop}px` }} />
+                <td
+                  colSpan={table.getVisibleFlatColumns().length}
+                  style={{ height: `${paddingTop}px` }}
+                />
               </tr>
             )}
             {virtualRows.map((virtualRow) => {
@@ -391,20 +413,34 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
                     !isGrandTotal && !isSubtotal && !isParent && 'hover:bg-muted/40 hover:shadow-sm'
                   )}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell, cellIndex) => {
+                    const isFirstCol = (cell.column.columnDef.meta as { isFirstColumn?: boolean })?.isFirstColumn || cellIndex === 0
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                        className={cn(
+                          isFirstCol && "sticky left-0 z-20 bg-background shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                          isFirstCol && isGrandTotal && "!bg-accent",
+                          isFirstCol && isSubtotal && "!bg-muted/30",
+                          isFirstCol && isParent && level === 0 && !isGrandTotal && !isSubtotal && "!bg-muted/20",
+                          isFirstCol && isParent && level > 0 && !isGrandTotal && !isSubtotal && "!bg-muted/15",
+                        )}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               )
             })}
             {paddingBottom > 0 && (
               <tr>
-                <td style={{ height: `${paddingBottom}px` }} />
+                <td
+                  colSpan={table.getVisibleFlatColumns().length}
+                  style={{ height: `${paddingBottom}px` }}
+                />
               </tr>
             )}
           </TableBody>
