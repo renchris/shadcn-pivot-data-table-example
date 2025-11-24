@@ -39,14 +39,11 @@ export function ClientPivotWrapper({
     // Check cache first
     if (transformCache.current.has(configHash)) {
       const cached = transformCache.current.get(configHash)!
-      console.log(`⚡ \x1b[32mHIT\x1b[0m   Transform cache  ${config.rowFields.join(',')}  \x1b[32m0.00ms\x1b[0m`)
       return cached.result
     }
 
     // Cache miss - perform transformation
-    const startTime = performance.now()
     const result = transformToPivot(rawData, config)
-    const duration = (performance.now() - startTime).toFixed(2)
 
     // Store in cache
     transformCache.current.set(configHash, {
@@ -71,9 +68,6 @@ export function ClientPivotWrapper({
         transformCache.current.delete(oldestKey)
       }
     }
-
-    // Log performance
-    console.log(`🔵 \x1b[34mMISS\x1b[0m  Transform cache  ${config.rowFields.join(',')}  \x1b[33m${duration}ms\x1b[0m`)
 
     return result
   }, [rawData, config])

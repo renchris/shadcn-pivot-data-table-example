@@ -1,5 +1,34 @@
 # shadcn-pivot-data-table-example
 
+## 2.3.0
+
+### Minor Changes
+
+- Add sticky header columns and rows for improved scrolling UX
+
+  Implement CSS-based sticky positioning for the pivot table:
+
+  **Features:**
+
+  - Sticky top headers (already existed, now enhanced)
+  - Sticky first column (row headers) with horizontal scroll
+  - Intersection cell (top-left) stays visible when scrolling both directions
+  - Subtle shadow on sticky column for visual separation
+
+  **Technical implementation:**
+
+  - Pure CSS `position: sticky` with z-index layering strategy
+  - z-50 for intersection cell, z-20 for first column cells, z-10 for other headers
+  - Background colors match row styling (totals, subtotals, parent rows)
+  - Added colSpan to virtual padding rows for proper layout
+  - Shadow: `shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]`
+
+  **Compatibility:**
+
+  - Works with TanStack Virtual (row virtualization)
+  - Works with expand/collapse functionality
+  - Supports all three modes: hierarchical, flat, unpivoted
+
 ## 2.2.0
 
 ### Minor Changes

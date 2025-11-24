@@ -65,7 +65,7 @@ git push -u origin library
 
 #### Option B: If you can fork from GitHub
 
-1. Navigate to https://github.com/renchris/shadcn-pivot-data-table-example
+1. Navigate to https://github.com/YOUR_ORG/pivot-table
 2. Click "Fork" → Select your organization
 3. Clone your fork locally
 

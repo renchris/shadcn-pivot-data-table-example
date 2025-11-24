@@ -1,13 +1,13 @@
 {
   "name": "shadcn-pivot-data-table-example",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "description": "Enterprise-grade pivot table with interactive Next.js demo. For npm package, see the 'library' branch.",
   "author": "Chris Ren",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chrisrennewbie/shadcn-pivot-data-table-example.git"
+    "url": "https://github.com/YOUR_ORG/pivot-table.git"
   },
   "engines": {
     "node": ">=18.0.0",

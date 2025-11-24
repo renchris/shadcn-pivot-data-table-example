@@ -127,7 +127,7 @@ npm publish --tag beta
 ```json
 {
   "dependencies": {
-    "shadcn-pivot-table": "github:renchris/shadcn-pivot-data-table-example#main"
+    "shadcn-pivot-table": "github:YOUR_ORG/pivot-table#main"
   }
 }
 ```

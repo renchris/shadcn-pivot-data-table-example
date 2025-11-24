@@ -43,8 +43,6 @@ export async function fetchRawData(scenario?: string): Promise<any[]> {
  * and getAvailableFields are called in parallel.
  */
 const fetchDataSource = cache(async (scenario?: string): Promise<any[]> => {
-  const startTime = performance.now()
-
   // Route to scenario-specific test fixtures
   let data: any[]
   switch (scenario) {
@@ -82,9 +80,6 @@ const fetchDataSource = cache(async (scenario?: string): Promise<any[]> => {
       // Fallback to sample data for development
       data = await generateSampleData()
   }
-
-  const duration = (performance.now() - startTime).toFixed(2)
-  console.log(`🔵 \x1b[34mMISS\x1b[0m  fetchDataSource  ${scenario || 'default'}  \x1b[33m${duration}ms\x1b[0m  ${data.length} rows`)
 
   return data
 })

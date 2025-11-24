@@ -2,10 +2,11 @@
 
 var chunkQSC4UIVT_js = require('./chunk-QSC4UIVT.js');
 var chunk6M575PJF_js = require('./chunk-6M575PJF.js');
-var chunk74OBHZM5_js = require('./chunk-74OBHZM5.js');
+var chunk3V676C77_js = require('./chunk-3V676C77.js');
 var react = require('react');
 var reactTable = require('@tanstack/react-table');
 var reactVirtual = require('@tanstack/react-virtual');
+var lucideReact = require('lucide-react');
 var jsxRuntime = require('react/jsx-runtime');
 var navigation = require('next/navigation');
 var reactSlot = require('@radix-ui/react-slot');
@@ -15,7 +16,7 @@ var reactDom = require('react-dom');
 var adapter = require('@atlaskit/pragmatic-drag-and-drop/element/adapter');
 var setCustomNativeDragPreview = require('@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview');
 var preserveOffsetOnSource = require('@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source');
-var lucideReact = require('lucide-react');
+var closestEdge = require('@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge');
 var DialogPrimitive = require('@radix-ui/react-dialog');
 var LabelPrimitive = require('@radix-ui/react-label');
 var RadioGroupPrimitive = require('@radix-ui/react-radio-group');
@@ -155,41 +156,132 @@ function TableCaption({
 }
 var PivotTableComponent = ({ data, config, metadata }) => {
   const parentRef = react.useRef(null);
+  const [expanded, setExpanded] = react.useState(true);
   const columns = react.useMemo(() => {
     const cols = [];
-    for (const field of config.rowFields) {
+    if (config.rowFields.length === 0 && config.columnFields.length === 0) {
+      const firstRow = data[0];
+      if (firstRow) {
+        const allKeys = [...new Set(Object.keys(firstRow))].filter((key) => !key.startsWith("__"));
+        return allKeys.map((key, index) => ({
+          id: `unpivoted_${key}_${index}`,
+          // Ensure unique ID
+          accessorFn: (row) => row[key],
+          // Use accessor function instead of accessorKey
+          header: formatFieldName(key),
+          cell: ({ getValue }) => {
+            const value = getValue();
+            if (typeof value === "number") {
+              return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right font-mono", children: value.toLocaleString() });
+            }
+            return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-left", children: String(value ?? "") });
+          },
+          size: 150,
+          meta: {
+            isFirstColumn: index === 0
+          }
+        }));
+      }
+      return [];
+    }
+    if (config.rowFields.length > 1) {
       cols.push({
-        id: field,
-        accessorKey: field,
-        header: formatFieldName(field),
+        id: "row_hierarchy",
+        // Use accessorFn to dynamically select the correct field based on row depth
+        accessorFn: (row) => {
+          const level = row.__level || 0;
+          const fieldIndex = Math.min(level, config.rowFields.length - 1);
+          const field = config.rowFields[fieldIndex];
+          return row[field];
+        },
+        header: config.rowFields.map(formatFieldName).join(" / "),
         cell: ({ row, getValue }) => {
           const value = getValue();
-          const level = row.original.__level || 0;
+          const level = row.depth;
           const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal;
-          return /* @__PURE__ */ jsxRuntime.jsx(
+          const canExpand = row.getCanExpand();
+          const isExpanded = row.getIsExpanded();
+          return /* @__PURE__ */ jsxRuntime.jsxs(
             "div",
             {
+              onClick: canExpand ? row.getToggleExpandedHandler() : void 0,
               className: chunkQSC4UIVT_js.cn(
-                "font-medium",
+                "flex items-center gap-2 transition-all",
+                // Font weight hierarchy based on level
+                level === 0 && canExpand && "font-semibold",
+                level === 1 && canExpand && "font-medium",
+                level >= 2 && "font-normal",
+                // Totals override
                 isTotal && "font-bold",
-                level > 0 && `pl-${level * 4}`
+                // Enhanced vertical guide for parent rows
+                canExpand && level > 0 && "border-l-2 border-muted/50 pl-3 hover:border-l-muted",
+                // Cursor pointer for expandable rows
+                canExpand && "cursor-pointer"
               ),
-              children: formatTotalLabel(value)
+              style: { paddingLeft: `${level * 1.5}rem` },
+              children: [
+                canExpand ? /* @__PURE__ */ jsxRuntime.jsx("div", { className: "w-7 flex items-center justify-center shrink-0", children: isExpanded ? /* @__PURE__ */ jsxRuntime.jsx(lucideReact.ChevronDown, { className: "h-4 w-4 text-muted-foreground" }) : /* @__PURE__ */ jsxRuntime.jsx(lucideReact.ChevronRight, { className: "h-4 w-4 text-muted-foreground" }) }) : /* @__PURE__ */ jsxRuntime.jsx("span", { className: "w-7" }),
+                /* @__PURE__ */ jsxRuntime.jsx("span", { children: formatTotalLabel(value) })
+              ]
             }
           );
         },
-        size: 200
+        size: 250,
+        meta: {
+          isFirstColumn: true
+        }
       });
+    } else {
+      for (const field of config.rowFields) {
+        const isFirstColumn = field === config.rowFields[0];
+        cols.push({
+          id: `row_${field}`,
+          accessorKey: field,
+          header: formatFieldName(field),
+          cell: ({ row, getValue }) => {
+            const value = getValue();
+            const level = row.original.__level || 0;
+            const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal;
+            return /* @__PURE__ */ jsxRuntime.jsx(
+              "div",
+              {
+                className: chunkQSC4UIVT_js.cn(
+                  "font-medium",
+                  isTotal && "font-bold",
+                  level > 0 && `pl-${level * 4}`
+                ),
+                children: formatTotalLabel(value)
+              }
+            );
+          },
+          size: 200,
+          meta: {
+            isFirstColumn
+          }
+        });
+      }
     }
     if (config.columnFields.length === 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: valueField.field,
+          id: `value_${valueField.field}`,
           accessorKey: valueField.displayName || valueField.field,
-          header: valueField.displayName || formatFieldName(valueField.field),
-          cell: ({ getValue }) => {
+          header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
+          cell: ({ getValue, row }) => {
             const value = getValue();
-            return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right font-mono", children: formatNumber(value, valueField.aggregation) });
+            const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal;
+            const canExpand = row.getCanExpand();
+            return /* @__PURE__ */ jsxRuntime.jsx(
+              "div",
+              {
+                className: chunkQSC4UIVT_js.cn(
+                  "text-right font-mono",
+                  isTotal && "font-bold",
+                  canExpand && !isTotal && "font-semibold"
+                ),
+                children: formatNumber(value, valueField.aggregation)
+              }
+            );
           },
           size: 150
         });
@@ -200,18 +292,20 @@ var PivotTableComponent = ({ data, config, metadata }) => {
       for (const combination of columnCombinations) {
         const groupLabel = combination.join(" - ");
         const groupColumns = config.valueFields.map((valueField) => ({
-          id: chunk74OBHZM5_js.generateColumnKey(combination, valueField.displayName || valueField.field),
-          accessorKey: chunk74OBHZM5_js.generateColumnKey(combination, valueField.displayName || valueField.field),
-          header: valueField.displayName || formatFieldName(valueField.field),
+          id: `pivot_${chunk3V676C77_js.generateColumnKey(combination, valueField.displayName || valueField.field)}`,
+          accessorKey: chunk3V676C77_js.generateColumnKey(combination, valueField.displayName || valueField.field),
+          header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
           cell: ({ getValue, row }) => {
             const value = getValue();
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal;
+            const canExpand = row.getCanExpand();
             return /* @__PURE__ */ jsxRuntime.jsx(
               "div",
               {
                 className: chunkQSC4UIVT_js.cn(
                   "text-right font-mono",
-                  isTotal && "font-bold"
+                  isTotal && "font-bold",
+                  canExpand && !isTotal && "font-semibold"
                 ),
                 children: formatNumber(value, valueField.aggregation)
               }
@@ -238,7 +332,7 @@ var PivotTableComponent = ({ data, config, metadata }) => {
         cols.push({
           id: `__total_${valueField.field}`,
           accessorKey: `__total_${valueField.field}`,
-          header: `Total ${valueField.displayName || formatFieldName(valueField.field)}`,
+          header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: `Total ${valueField.displayName || formatFieldName(valueField.field)}` }),
           cell: ({ getValue, row }) => {
             const value = getValue();
             const isTotal = row.original.__isGrandTotal || row.original.__isSubtotal;
@@ -258,11 +352,18 @@ var PivotTableComponent = ({ data, config, metadata }) => {
       }
     }
     return cols;
-  }, [config, metadata]);
+  }, [config, metadata, data]);
   const table = reactTable.useReactTable({
     data,
     columns,
-    getCoreRowModel: reactTable.getCoreRowModel()
+    state: {
+      expanded
+    },
+    onExpandedChange: setExpanded,
+    getSubRows: (row) => row.subRows,
+    // Tell TanStack Table where to find child rows
+    getCoreRowModel: reactTable.getCoreRowModel(),
+    getExpandedRowModel: reactTable.getExpandedRowModel()
   });
   const rowVirtualizer = reactVirtual.useVirtualizer({
     count: table.getRowModel().rows.length,
@@ -282,47 +383,87 @@ var PivotTableComponent = ({ data, config, metadata }) => {
         className: "overflow-auto border rounded-lg",
         style: { height: "600px" },
         children: /* @__PURE__ */ jsxRuntime.jsxs(Table, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(TableHeader, { className: "sticky top-0 bg-background z-10", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsxRuntime.jsx(TableRow, { children: headerGroup.headers.map((header) => /* @__PURE__ */ jsxRuntime.jsx(
-            TableHead,
-            {
-              colSpan: header.colSpan,
-              style: { width: header.getSize() },
-              className: "bg-muted font-semibold",
-              children: header.isPlaceholder ? null : reactTable.flexRender(
-                header.column.columnDef.header,
-                header.getContext()
-              )
-            },
-            header.id
-          )) }, headerGroup.id)) }),
+          /* @__PURE__ */ jsxRuntime.jsx(TableHeader, { className: "sticky top-0", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsxRuntime.jsx(TableRow, { children: headerGroup.headers.map((header, headerIndex) => {
+            const isFirstColumn = header.column.columnDef.meta?.isFirstColumn || headerIndex === 0;
+            return /* @__PURE__ */ jsxRuntime.jsx(
+              TableHead,
+              {
+                colSpan: header.colSpan,
+                style: { width: header.getSize() },
+                className: chunkQSC4UIVT_js.cn(
+                  "bg-muted/40 border-b-2 font-semibold",
+                  isFirstColumn ? "sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]" : "z-10"
+                ),
+                children: header.isPlaceholder ? null : reactTable.flexRender(
+                  header.column.columnDef.header,
+                  header.getContext()
+                )
+              },
+              header.id
+            );
+          }) }, headerGroup.id)) }),
           /* @__PURE__ */ jsxRuntime.jsxs(TableBody, { children: [
-            paddingTop > 0 && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx("td", { style: { height: `${paddingTop}px` } }) }),
+            paddingTop > 0 && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx(
+              "td",
+              {
+                colSpan: table.getVisibleFlatColumns().length,
+                style: { height: `${paddingTop}px` }
+              }
+            ) }),
             virtualRows.map((virtualRow) => {
               const row = table.getRowModel().rows[virtualRow.index];
               if (!row) return null;
               const isGrandTotal = row.original.__isGrandTotal;
               const isSubtotal = row.original.__isSubtotal;
+              const level = row.depth;
+              const isParent = row.getCanExpand();
               return /* @__PURE__ */ jsxRuntime.jsx(
                 TableRow,
                 {
                   "data-index": virtualRow.index,
                   className: chunkQSC4UIVT_js.cn(
+                    // Base styling - clean white background for leaf rows
+                    "transition-colors border-b",
+                    !isParent && !isGrandTotal && !isSubtotal && "bg-background",
+                    // Parent row backgrounds - stronger "section" effect
+                    isParent && level === 0 && !isGrandTotal && !isSubtotal && "bg-muted/20 border-t border-t-muted/30",
+                    isParent && level > 0 && !isGrandTotal && !isSubtotal && "bg-muted/15",
+                    // Totals styling (overrides backgrounds)
                     isGrandTotal && "bg-accent font-bold border-t-2 border-t-border",
-                    isSubtotal && "bg-muted/30 font-semibold"
+                    isSubtotal && "bg-muted/30 font-semibold",
+                    // Enhanced hover (only for non-total rows)
+                    !isGrandTotal && !isSubtotal && isParent && "hover:bg-muted/30 hover:shadow-sm",
+                    !isGrandTotal && !isSubtotal && !isParent && "hover:bg-muted/40 hover:shadow-sm"
                   ),
-                  children: row.getVisibleCells().map((cell) => /* @__PURE__ */ jsxRuntime.jsx(
-                    TableCell,
-                    {
-                      style: { width: cell.column.getSize() },
-                      children: reactTable.flexRender(cell.column.columnDef.cell, cell.getContext())
-                    },
-                    cell.id
-                  ))
+                  children: row.getVisibleCells().map((cell, cellIndex) => {
+                    const isFirstCol = cell.column.columnDef.meta?.isFirstColumn || cellIndex === 0;
+                    return /* @__PURE__ */ jsxRuntime.jsx(
+                      TableCell,
+                      {
+                        style: { width: cell.column.getSize() },
+                        className: chunkQSC4UIVT_js.cn(
+                          isFirstCol && "sticky left-0 z-20 bg-background shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                          isFirstCol && isGrandTotal && "!bg-accent",
+                          isFirstCol && isSubtotal && "!bg-muted/30",
+                          isFirstCol && isParent && level === 0 && !isGrandTotal && !isSubtotal && "!bg-muted/20",
+                          isFirstCol && isParent && level > 0 && !isGrandTotal && !isSubtotal && "!bg-muted/15"
+                        ),
+                        children: reactTable.flexRender(cell.column.columnDef.cell, cell.getContext())
+                      },
+                      cell.id
+                    );
+                  })
                 },
                 row.id
               );
             }),
-            paddingBottom > 0 && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx("td", { style: { height: `${paddingBottom}px` } }) })
+            paddingBottom > 0 && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx(
+              "td",
+              {
+                colSpan: table.getVisibleFlatColumns().length,
+                style: { height: `${paddingBottom}px` }
+              }
+            ) })
           ] })
         ] })
       }
@@ -561,7 +702,8 @@ var DraggableFieldComponent = ({
   fieldType = "string",
   sourceZone = "available",
   onRemove,
-  inUse = false
+  inUse = false,
+  index
 }) => {
   const ref = react.useRef(null);
   const [dragState, setDragState] = react.useState({ type: "idle" });
@@ -605,37 +747,40 @@ var DraggableFieldComponent = ({
     }
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { ref, className: "inline-block group", children: /* @__PURE__ */ jsxRuntime.jsxs(
-      Badge,
-      {
-        variant: "outline",
-        className: chunkQSC4UIVT_js.cn(
-          "cursor-move select-none transition-all hover:bg-accent gap-1",
-          dragState.type === "dragging" && "opacity-50 cursor-grabbing",
-          inUse && "bg-primary/10 border-primary/30"
-        ),
-        children: [
-          /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-1.5", children: [
-            getFieldIcon(),
-            /* @__PURE__ */ jsxRuntime.jsx("span", { className: "font-medium", children: formatFieldName2(field) }),
-            inUse && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-[10px] font-semibold text-primary", children: "IN USE" })
-          ] }),
-          sourceZone !== "available" && onRemove && /* @__PURE__ */ jsxRuntime.jsx(
-            Button,
-            {
-              variant: "ghost",
-              size: "sm",
-              className: "h-3 w-3 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground",
-              onClick: (e) => {
-                e.stopPropagation();
-                onRemove();
-              },
-              children: /* @__PURE__ */ jsxRuntime.jsx(lucideReact.X, { className: "h-2.5 w-2.5" })
-            }
-          )
-        ]
-      }
-    ) }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { ref, className: "inline-block group relative", children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        Badge,
+        {
+          variant: "outline",
+          className: chunkQSC4UIVT_js.cn(
+            "cursor-move select-none transition-all hover:bg-accent gap-1",
+            dragState.type === "dragging" && "opacity-50 cursor-grabbing",
+            inUse && "bg-primary/10 border-primary/30"
+          ),
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-1.5", children: [
+              getFieldIcon(),
+              /* @__PURE__ */ jsxRuntime.jsx("span", { className: "font-medium", children: formatFieldName2(field) }),
+              inUse && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-[10px] font-semibold text-primary", children: "IN USE" })
+            ] }),
+            sourceZone !== "available" && onRemove && /* @__PURE__ */ jsxRuntime.jsx(
+              Button,
+              {
+                variant: "ghost",
+                size: "sm",
+                className: "h-3 w-3 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground",
+                onClick: (e) => {
+                  e.stopPropagation();
+                  onRemove();
+                },
+                children: /* @__PURE__ */ jsxRuntime.jsx(lucideReact.X, { className: "h-2.5 w-2.5" })
+              }
+            )
+          ]
+        }
+      ),
+      index !== void 0 && sourceZone !== "available" && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center shadow-sm", children: index + 1 })
+    ] }),
     dragState.type === "preview" && reactDom.createPortal(
       /* @__PURE__ */ jsxRuntime.jsx(Badge, { variant: "outline", className: "cursor-grabbing gap-1", children: /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-1.5", children: [
         getFieldIcon(),
@@ -655,6 +800,7 @@ var DropZoneComponent = ({
   fields,
   onFieldAdd,
   onFieldRemove,
+  onFieldReorder,
   zone,
   availableFields
 }) => {
@@ -695,12 +841,14 @@ var DropZoneComponent = ({
           fields.length === 0 && "flex items-center justify-center"
         ),
         children: fields.length > 0 ? /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex flex-wrap gap-2", children: fields.map((field, index) => /* @__PURE__ */ jsxRuntime.jsx(
-          DraggableField,
+          ReorderableField,
           {
             field,
+            index,
             fieldType: getFieldType(field),
-            sourceZone: zone,
-            onRemove: () => onFieldRemove(field)
+            zone,
+            onRemove: () => onFieldRemove(field),
+            onReorder: onFieldReorder
           },
           `${field}-${index}`
         )) }) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground text-center", children: "Drag fields here" })
@@ -708,11 +856,76 @@ var DropZoneComponent = ({
     )
   ] });
 };
+var ReorderableField = ({
+  field,
+  index,
+  fieldType,
+  zone,
+  onRemove,
+  onReorder
+}) => {
+  const ref = react.useRef(null);
+  const [closestEdge$1, setClosestEdge] = react.useState(null);
+  react.useEffect(() => {
+    const el = ref.current;
+    if (!el || !onReorder) return;
+    return adapter.dropTargetForElements({
+      element: el,
+      canDrop: ({ source }) => {
+        const sourceData = source.data;
+        return sourceData.sourceZone === zone;
+      },
+      getData: ({ input, element }) => {
+        const data = { field, zone };
+        return closestEdge.attachClosestEdge(data, {
+          input,
+          element,
+          allowedEdges: ["left", "right"]
+        });
+      },
+      onDragEnter: ({ self }) => {
+        const edge = closestEdge.extractClosestEdge(self.data);
+        setClosestEdge(edge);
+      },
+      onDrag: ({ self }) => {
+        const edge = closestEdge.extractClosestEdge(self.data);
+        setClosestEdge(edge);
+      },
+      onDragLeave: () => {
+        setClosestEdge(null);
+      },
+      onDrop: ({ source, self }) => {
+        const edge = closestEdge.extractClosestEdge(self.data);
+        const sourceField = source.data.field;
+        if (sourceField && sourceField !== field && edge && onReorder) {
+          onReorder(sourceField, field, edge);
+        }
+        setClosestEdge(null);
+      }
+    });
+  }, [field, zone, onReorder]);
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref, className: "relative", children: [
+    /* @__PURE__ */ jsxRuntime.jsx(
+      DraggableField,
+      {
+        field,
+        fieldType,
+        sourceZone: zone,
+        onRemove,
+        index
+      }
+    ),
+    closestEdge$1 === "left" && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-0.5 bg-primary rounded-full" }),
+    closestEdge$1 === "right" && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "absolute right-0 top-0 bottom-0 w-0.5 bg-primary rounded-full" })
+  ] });
+};
 var DropZone = react.memo(DropZoneComponent);
 function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) {
   const router = navigation.useRouter();
   const pathname = navigation.usePathname();
   const [isPending, startTransition] = react.useTransition();
+  const [isAvailableDraggedOver, setIsAvailableDraggedOver] = react.useState(false);
+  const availableFieldsRef = react.useRef(null);
   const debounceTimeoutRef = react.useRef(null);
   react.useEffect(() => {
     return () => {
@@ -797,6 +1010,80 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
     onConfigChange(newConfig);
     updateURLDebounced(newConfig);
   }, [config, onConfigChange, updateURLDebounced]);
+  const handleReturnToAvailable = react.useCallback(
+    (fieldName, sourceZone) => {
+      if (sourceZone === "available") {
+        return;
+      }
+      let newConfig = { ...config };
+      if (sourceZone === "rows") {
+        newConfig.rowFields = newConfig.rowFields.filter((f) => f !== fieldName);
+      } else if (sourceZone === "columns") {
+        newConfig.columnFields = newConfig.columnFields.filter((f) => f !== fieldName);
+      }
+      onConfigChange(newConfig);
+      updateURLDebounced(newConfig);
+    },
+    [config, onConfigChange, updateURLDebounced]
+  );
+  const handleReorderRowFields = react.useCallback(
+    (sourceField, targetField, edge) => {
+      const newFields = [...config.rowFields];
+      const sourceIndex = newFields.indexOf(sourceField);
+      const targetIndex = newFields.indexOf(targetField);
+      if (sourceIndex === -1 || targetIndex === -1) return;
+      newFields.splice(sourceIndex, 1);
+      let insertIndex = targetIndex;
+      if (edge === "right" || edge === "bottom") {
+        insertIndex++;
+      }
+      if (sourceIndex < targetIndex) {
+        insertIndex--;
+      }
+      newFields.splice(insertIndex, 0, sourceField);
+      const newConfig = { ...config, rowFields: newFields };
+      onConfigChange(newConfig);
+      updateURLDebounced(newConfig);
+    },
+    [config, onConfigChange, updateURLDebounced]
+  );
+  const handleReorderColumnFields = react.useCallback(
+    (sourceField, targetField, edge) => {
+      const newFields = [...config.columnFields];
+      const sourceIndex = newFields.indexOf(sourceField);
+      const targetIndex = newFields.indexOf(targetField);
+      if (sourceIndex === -1 || targetIndex === -1) return;
+      newFields.splice(sourceIndex, 1);
+      let insertIndex = targetIndex;
+      if (edge === "right" || edge === "bottom") {
+        insertIndex++;
+      }
+      if (sourceIndex < targetIndex) {
+        insertIndex--;
+      }
+      newFields.splice(insertIndex, 0, sourceField);
+      const newConfig = { ...config, columnFields: newFields };
+      onConfigChange(newConfig);
+      updateURLDebounced(newConfig);
+    },
+    [config, onConfigChange, updateURLDebounced]
+  );
+  react.useEffect(() => {
+    const el = availableFieldsRef.current;
+    if (!el) return;
+    return adapter.dropTargetForElements({
+      element: el,
+      onDragEnter: () => setIsAvailableDraggedOver(true),
+      onDragLeave: () => setIsAvailableDraggedOver(false),
+      onDrop: ({ source }) => {
+        setIsAvailableDraggedOver(false);
+        const data = source.data;
+        if (data.field) {
+          handleReturnToAvailable(data.field, data.sourceZone);
+        }
+      }
+    });
+  }, [handleReturnToAvailable]);
   const handleReset = react.useCallback(() => {
     onConfigChange(defaultConfig);
     if (debounceTimeoutRef.current) {
@@ -822,16 +1109,27 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
     /* @__PURE__ */ jsxRuntime.jsxs(CardContent, { className: "space-y-6", children: [
       /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
         /* @__PURE__ */ jsxRuntime.jsx("h3", { className: "text-sm font-medium mb-3", children: "Available Fields" }),
-        /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex flex-wrap gap-2 min-h-[60px] p-3 border-2 border-dashed rounded-lg bg-muted/20", children: getAvailableFields().length > 0 ? getAvailableFields().map((field) => /* @__PURE__ */ jsxRuntime.jsx(
-          DraggableField,
+        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground mb-3", children: "Drag fields here to remove them from the pivot" }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          "div",
           {
-            field: field.name,
-            fieldType: field.type,
-            sourceZone: "available",
-            inUse: field.inUse
-          },
-          field.name
-        )) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground w-full text-center", children: "No fields available" }) })
+            ref: availableFieldsRef,
+            className: chunkQSC4UIVT_js.cn(
+              "flex flex-wrap gap-2 min-h-[60px] p-3 border-2 border-dashed rounded-lg transition-colors",
+              isAvailableDraggedOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 bg-muted/20"
+            ),
+            children: getAvailableFields().length > 0 ? getAvailableFields().map((field) => /* @__PURE__ */ jsxRuntime.jsx(
+              DraggableField,
+              {
+                field: field.name,
+                fieldType: field.type,
+                sourceZone: "available",
+                inUse: field.inUse
+              },
+              field.name
+            )) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground w-full text-center", children: "No fields available" })
+          }
+        )
       ] }),
       /* @__PURE__ */ jsxRuntime.jsx(Separator, {}),
       /* @__PURE__ */ jsxRuntime.jsx(
@@ -842,6 +1140,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
           fields: config.rowFields,
           onFieldAdd: handleAddRowField,
           onFieldRemove: (field) => handleRemoveField(field, "rows"),
+          onFieldReorder: handleReorderRowFields,
           zone: "rows",
           availableFields
         }
@@ -855,6 +1154,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
           fields: config.columnFields,
           onFieldAdd: handleAddColumnField,
           onFieldRemove: (field) => handleRemoveField(field, "columns"),
+          onFieldReorder: handleReorderColumnFields,
           zone: "columns",
           availableFields
         }
@@ -1138,11 +1438,31 @@ function ClientPivotWrapper({
   availableFields
 }) {
   const [config, setConfig] = react.useState(initialConfig);
+  const transformCache = react.useRef(/* @__PURE__ */ new Map());
   const pivotResult = react.useMemo(() => {
-    const startTime = performance.now();
-    const result = chunk74OBHZM5_js.transformToPivot(rawData, config);
-    const endTime = performance.now();
-    console.log(`Client-side pivot transformation: ${(endTime - startTime).toFixed(2)}ms`);
+    const configHash = JSON.stringify(config);
+    if (transformCache.current.has(configHash)) {
+      const cached = transformCache.current.get(configHash);
+      return cached.result;
+    }
+    const result = chunk3V676C77_js.transformToPivot(rawData, config);
+    transformCache.current.set(configHash, {
+      result,
+      timestamp: Date.now()
+    });
+    if (transformCache.current.size > 10) {
+      let oldestKey = "";
+      let oldestTime = Infinity;
+      for (const [key, value] of transformCache.current.entries()) {
+        if (value.timestamp < oldestTime) {
+          oldestTime = value.timestamp;
+          oldestKey = key;
+        }
+      }
+      if (oldestKey) {
+        transformCache.current.delete(oldestKey);
+      }
+    }
     return result;
   }, [rawData, config]);
   const handleConfigChange = react.useCallback((newConfig) => {
@@ -1161,7 +1481,10 @@ function ClientPivotWrapper({
     /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
       /* @__PURE__ */ jsxRuntime.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-start justify-between", children: [
         /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(CardTitle, { children: "Results" }),
+          /* @__PURE__ */ jsxRuntime.jsxs(CardTitle, { children: [
+            "Results",
+            config.rowFields.length === 0 && config.columnFields.length === 0 && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "ml-2 text-sm font-normal text-muted-foreground", children: "(Unpivoted - Raw Data)" })
+          ] }),
           /* @__PURE__ */ jsxRuntime.jsxs(CardDescription, { children: [
             pivotResult.metadata.rowCount,
             " rows \xD7 ",
@@ -1470,91 +1793,91 @@ Object.defineProperty(exports, "cn", {
 });
 Object.defineProperty(exports, "AggregationFunctionSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.AggregationFunctionSchema; }
+  get: function () { return chunk3V676C77_js.AggregationFunctionSchema; }
 });
 Object.defineProperty(exports, "ExportConfigSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.ExportConfigSchema; }
+  get: function () { return chunk3V676C77_js.ExportConfigSchema; }
 });
 Object.defineProperty(exports, "ExportFormatSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.ExportFormatSchema; }
+  get: function () { return chunk3V676C77_js.ExportFormatSchema; }
 });
 Object.defineProperty(exports, "PivotConfigSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.PivotConfigSchema; }
+  get: function () { return chunk3V676C77_js.PivotConfigSchema; }
 });
 Object.defineProperty(exports, "PivotMetadataSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.PivotMetadataSchema; }
+  get: function () { return chunk3V676C77_js.PivotMetadataSchema; }
 });
 Object.defineProperty(exports, "PivotResultSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.PivotResultSchema; }
+  get: function () { return chunk3V676C77_js.PivotResultSchema; }
 });
 Object.defineProperty(exports, "ValueFieldConfigSchema", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.ValueFieldConfigSchema; }
+  get: function () { return chunk3V676C77_js.ValueFieldConfigSchema; }
 });
 Object.defineProperty(exports, "aggregate", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.aggregate; }
+  get: function () { return chunk3V676C77_js.aggregate; }
 });
 Object.defineProperty(exports, "aggregationFunctions", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.aggregationFunctions; }
+  get: function () { return chunk3V676C77_js.aggregationFunctions; }
 });
 Object.defineProperty(exports, "avg", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.avg; }
+  get: function () { return chunk3V676C77_js.avg; }
 });
 Object.defineProperty(exports, "count", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.count; }
+  get: function () { return chunk3V676C77_js.count; }
 });
 Object.defineProperty(exports, "first", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.first; }
+  get: function () { return chunk3V676C77_js.first; }
 });
 Object.defineProperty(exports, "formatAggregationName", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.formatAggregationName; }
+  get: function () { return chunk3V676C77_js.formatAggregationName; }
 });
 Object.defineProperty(exports, "generateColumnKey", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.generateColumnKey; }
+  get: function () { return chunk3V676C77_js.generateColumnKey; }
 });
 Object.defineProperty(exports, "getAggregationFunction", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.getAggregationFunction; }
+  get: function () { return chunk3V676C77_js.getAggregationFunction; }
 });
 Object.defineProperty(exports, "last", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.last; }
+  get: function () { return chunk3V676C77_js.last; }
 });
 Object.defineProperty(exports, "max", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.max; }
+  get: function () { return chunk3V676C77_js.max; }
 });
 Object.defineProperty(exports, "median", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.median; }
+  get: function () { return chunk3V676C77_js.median; }
 });
 Object.defineProperty(exports, "min", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.min; }
+  get: function () { return chunk3V676C77_js.min; }
 });
 Object.defineProperty(exports, "parseColumnKey", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.parseColumnKey; }
+  get: function () { return chunk3V676C77_js.parseColumnKey; }
 });
 Object.defineProperty(exports, "sum", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.sum; }
+  get: function () { return chunk3V676C77_js.sum; }
 });
 Object.defineProperty(exports, "transformToPivot", {
   enumerable: true,
-  get: function () { return chunk74OBHZM5_js.transformToPivot; }
+  get: function () { return chunk3V676C77_js.transformToPivot; }
 });
 exports.Badge = Badge;
 exports.Button = Button;
