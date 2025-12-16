@@ -15,6 +15,12 @@ interface DropZoneProps {
   onFieldReorder?: (sourceField: string, targetField: string, edge: Edge) => void
   zone: 'rows' | 'columns' | 'available'
   availableFields: Array<{ name: string; type: string }>
+  /** Additional CSS class names for the root container */
+  className?: string
+  /** Inline styles for the root container */
+  style?: React.CSSProperties
+  /** Additional CSS class names for the drop target area */
+  dropAreaClassName?: string
 }
 
 const DropZoneComponent = ({
@@ -26,6 +32,9 @@ const DropZoneComponent = ({
   onFieldReorder,
   zone,
   availableFields,
+  className,
+  style,
+  dropAreaClassName,
 }: DropZoneProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [isDraggedOver, setIsDraggedOver] = useState(false)
@@ -61,7 +70,7 @@ const DropZoneComponent = ({
   }, [availableFields])
 
   return (
-    <div>
+    <div className={className} style={style}>
       <h3 className="text-sm font-medium mb-2">{label}</h3>
       {description && (
         <p className="text-sm text-muted-foreground mb-3">{description}</p>
@@ -73,7 +82,8 @@ const DropZoneComponent = ({
           isDraggedOver
             ? 'border-primary bg-primary/5'
             : 'border-muted-foreground/25 bg-muted/20',
-          fields.length === 0 && 'flex items-center justify-center'
+          fields.length === 0 && 'flex items-center justify-center',
+          dropAreaClassName
         )}
       >
         {fields.length > 0 ? (

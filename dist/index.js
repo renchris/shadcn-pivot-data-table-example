@@ -154,7 +154,14 @@ function TableCaption({
     }
   );
 }
-var PivotTableComponent = ({ data, config, metadata }) => {
+var PivotTableComponent = ({
+  data,
+  config,
+  metadata,
+  className,
+  style,
+  ...props
+}) => {
   const parentRef = react.useRef(null);
   const [expanded, setExpanded] = react.useState(true);
   const columns = react.useMemo(() => {
@@ -375,7 +382,7 @@ var PivotTableComponent = ({ data, config, metadata }) => {
   const totalSize = rowVirtualizer.getTotalSize();
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
   const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) : 0;
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "space-y-4", children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: chunkQSC4UIVT_js.cn("space-y-4", className), style, ...props, children: [
     /* @__PURE__ */ jsxRuntime.jsx(
       "div",
       {
@@ -484,7 +491,7 @@ var PivotTableComponent = ({ data, config, metadata }) => {
   ] });
 };
 var PivotTable = react.memo(PivotTableComponent, (prevProps, nextProps) => {
-  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config);
+  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && prevProps.className === nextProps.className && prevProps.style === nextProps.style && JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config);
 });
 PivotTable.displayName = "PivotTable";
 function generateCombinations(fields, uniqueValues) {
@@ -703,7 +710,9 @@ var DraggableFieldComponent = ({
   sourceZone = "available",
   onRemove,
   inUse = false,
-  index
+  index,
+  className,
+  style
 }) => {
   const ref = react.useRef(null);
   const [dragState, setDragState] = react.useState({ type: "idle" });
@@ -755,8 +764,10 @@ var DraggableFieldComponent = ({
           className: chunkQSC4UIVT_js.cn(
             "cursor-move select-none transition-all hover:bg-accent gap-1",
             dragState.type === "dragging" && "opacity-50 cursor-grabbing",
-            inUse && "bg-primary/10 border-primary/30"
+            inUse && "bg-primary/10 border-primary/30",
+            className
           ),
+          style,
           children: [
             /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-1.5", children: [
               getFieldIcon(),
@@ -802,7 +813,10 @@ var DropZoneComponent = ({
   onFieldRemove,
   onFieldReorder,
   zone,
-  availableFields
+  availableFields,
+  className,
+  style,
+  dropAreaClassName
 }) => {
   const ref = react.useRef(null);
   const [isDraggedOver, setIsDraggedOver] = react.useState(false);
@@ -828,7 +842,7 @@ var DropZoneComponent = ({
       return fieldInfo?.type || "string";
     };
   }, [availableFields]);
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className, style, children: [
     /* @__PURE__ */ jsxRuntime.jsx("h3", { className: "text-sm font-medium mb-2", children: label }),
     description && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground mb-3", children: description }),
     /* @__PURE__ */ jsxRuntime.jsx(
@@ -838,7 +852,8 @@ var DropZoneComponent = ({
         className: chunkQSC4UIVT_js.cn(
           "min-h-[80px] p-3 border-2 border-dashed rounded-lg transition-colors",
           isDraggedOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 bg-muted/20",
-          fields.length === 0 && "flex items-center justify-center"
+          fields.length === 0 && "flex items-center justify-center",
+          dropAreaClassName
         ),
         children: fields.length > 0 ? /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex flex-wrap gap-2", children: fields.map((field, index) => /* @__PURE__ */ jsxRuntime.jsx(
           ReorderableField,
@@ -920,7 +935,14 @@ var ReorderableField = ({
   ] });
 };
 var DropZone = react.memo(DropZoneComponent);
-function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) {
+function PivotPanel({
+  config,
+  defaultConfig,
+  availableFields,
+  onConfigChange,
+  className,
+  style
+}) {
   const router = navigation.useRouter();
   const pathname = navigation.usePathname();
   const [isPending, startTransition] = react.useTransition();
@@ -973,7 +995,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
       if (sourceZone === "rows" && config.rowFields.includes(fieldName)) {
         return;
       }
-      let newConfig = { ...config };
+      const newConfig = { ...config };
       if (sourceZone === "columns") {
         newConfig.columnFields = newConfig.columnFields.filter((f) => f !== fieldName);
       }
@@ -990,7 +1012,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
       if (sourceZone === "columns" && config.columnFields.includes(fieldName)) {
         return;
       }
-      let newConfig = { ...config };
+      const newConfig = { ...config };
       if (sourceZone === "rows") {
         newConfig.rowFields = newConfig.rowFields.filter((f) => f !== fieldName);
       }
@@ -1015,7 +1037,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
       if (sourceZone === "available") {
         return;
       }
-      let newConfig = { ...config };
+      const newConfig = { ...config };
       if (sourceZone === "rows") {
         newConfig.rowFields = newConfig.rowFields.filter((f) => f !== fieldName);
       } else if (sourceZone === "columns") {
@@ -1091,7 +1113,7 @@ function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }) 
     }
     updateURLImmediate(defaultConfig);
   }, [defaultConfig, onConfigChange, updateURLImmediate]);
-  return /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(Card, { className, style, children: [
     /* @__PURE__ */ jsxRuntime.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center justify-between", children: [
       /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
         /* @__PURE__ */ jsxRuntime.jsxs(CardTitle, { className: "flex items-center gap-2", children: [
@@ -1349,7 +1371,14 @@ function RadioGroupItem({
     }
   );
 }
-function ExportDialog({ data, filename = "pivot-export" }) {
+function ExportDialog({
+  data,
+  filename = "pivot-export",
+  className,
+  style,
+  dialogClassName,
+  dialogStyle
+}) {
   const [open, setOpen] = react.useState(false);
   const [format, setFormat] = react.useState("csv");
   const [isExporting, setIsExporting] = react.useState(false);
@@ -1386,11 +1415,11 @@ function ExportDialog({ data, filename = "pivot-export" }) {
     }
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(Dialog, { open, onOpenChange: setOpen, children: [
-    /* @__PURE__ */ jsxRuntime.jsx(DialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsxs(Button, { variant: "outline", size: "sm", children: [
+    /* @__PURE__ */ jsxRuntime.jsx(DialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsxs(Button, { variant: "outline", size: "sm", className, style, children: [
       /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Download, { className: "h-4 w-4 mr-2" }),
       "Export"
     ] }) }),
-    /* @__PURE__ */ jsxRuntime.jsxs(DialogContent, { className: "sm:max-w-md", children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(DialogContent, { className: chunkQSC4UIVT_js.cn("sm:max-w-md", dialogClassName), style: dialogStyle, children: [
       /* @__PURE__ */ jsxRuntime.jsxs(DialogHeader, { children: [
         /* @__PURE__ */ jsxRuntime.jsx(DialogTitle, { children: "Export Pivot Table" }),
         /* @__PURE__ */ jsxRuntime.jsx(DialogDescription, { children: "Choose a format to export your pivot table data" })
@@ -1435,7 +1464,12 @@ function ClientPivotWrapper({
   rawData,
   initialConfig,
   defaultConfig,
-  availableFields
+  availableFields,
+  className,
+  style,
+  panelClassName,
+  resultsClassName,
+  tableClassName
 }) {
   const [config, setConfig] = react.useState(initialConfig);
   const transformCache = react.useRef(/* @__PURE__ */ new Map());
@@ -1468,17 +1502,18 @@ function ClientPivotWrapper({
   const handleConfigChange = react.useCallback((newConfig) => {
     setConfig(newConfig);
   }, []);
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "space-y-6", children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: chunkQSC4UIVT_js.cn("space-y-6", className), style, children: [
     /* @__PURE__ */ jsxRuntime.jsx(
       PivotPanel,
       {
         config,
         defaultConfig,
         availableFields,
-        onConfigChange: handleConfigChange
+        onConfigChange: handleConfigChange,
+        className: panelClassName
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(Card, { className: resultsClassName, children: [
       /* @__PURE__ */ jsxRuntime.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-start justify-between", children: [
         /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntime.jsxs(CardTitle, { children: [
@@ -1499,7 +1534,8 @@ function ClientPivotWrapper({
         {
           data: pivotResult.data,
           config,
-          metadata: pivotResult.metadata
+          metadata: pivotResult.metadata,
+          className: tableClassName
         }
       ) })
     ] })

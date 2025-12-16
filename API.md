@@ -266,6 +266,95 @@ import { ExportDialog } from 'shadcn-pivot-table'
 
 ---
 
+## Styling Composability
+
+All pivot components support `className` and `style` props for customization, following Shadcn UI patterns.
+
+### Basic Usage
+
+```tsx
+// Add custom classes to any component
+<PivotTable
+  data={result.data}
+  config={config}
+  metadata={result.metadata}
+  className="my-custom-table border-2"
+/>
+
+// Override default styles
+<PivotPanel
+  config={config}
+  availableFields={fields}
+  onConfigChange={setConfig}
+  className="bg-slate-50 dark:bg-slate-900"
+  style={{ maxHeight: '500px' }}
+/>
+```
+
+### Component-Specific Props
+
+#### `<PivotTable />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for root container |
+| `style` | `React.CSSProperties` | Inline styles for root container |
+
+#### `<PivotPanel />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for Card wrapper |
+| `style` | `React.CSSProperties` | Inline styles for Card wrapper |
+
+#### `<ExportDialog />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for trigger button |
+| `style` | `React.CSSProperties` | Inline styles for trigger button |
+| `dialogClassName` | `string` | Additional classes for dialog content |
+| `dialogStyle` | `React.CSSProperties` | Inline styles for dialog content |
+
+#### `<ClientPivotWrapper />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for root container |
+| `style` | `React.CSSProperties` | Inline styles for root container |
+| `panelClassName` | `string` | Additional classes for PivotPanel |
+| `resultsClassName` | `string` | Additional classes for results Card |
+| `tableClassName` | `string` | Additional classes for PivotTable |
+
+#### `<DraggableField />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for Badge element |
+| `style` | `React.CSSProperties` | Inline styles for Badge element |
+
+#### `<DropZone />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional classes for root container |
+| `style` | `React.CSSProperties` | Inline styles for root container |
+| `dropAreaClassName` | `string` | Additional classes for drop target area |
+
+### Class Merging Behavior
+
+All components use the `cn()` utility (Tailwind Merge + clsx) to merge classes. Your custom classes will override conflicting base classes:
+
+```tsx
+// This will override the default spacing
+<ClientPivotWrapper
+  className="space-y-2"  // Overrides default "space-y-6"
+  {...otherProps}
+/>
+```
+
+---
+
 ## Aggregation Functions
 
 ### `aggregate(values, aggregation)`

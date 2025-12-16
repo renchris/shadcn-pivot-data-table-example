@@ -23,9 +23,20 @@ interface PivotPanelProps {
   defaultConfig: PivotConfig // Scenario's default config for reset
   availableFields: Array<{ name: string; type: string }>
   onConfigChange: (config: PivotConfig) => void // Required for controlled component
+  /** Additional CSS class names for the root Card element */
+  className?: string
+  /** Inline styles for the root Card element */
+  style?: React.CSSProperties
 }
 
-export function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }: PivotPanelProps) {
+export function PivotPanel({
+  config,
+  defaultConfig,
+  availableFields,
+  onConfigChange,
+  className,
+  style
+}: PivotPanelProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
@@ -103,7 +114,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
         return
       }
 
-      let newConfig = { ...config }
+      const newConfig = { ...config }
 
       // Remove from source zone if moving between zones
       if (sourceZone === 'columns') {
@@ -131,7 +142,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
         return
       }
 
-      let newConfig = { ...config }
+      const newConfig = { ...config }
 
       // Remove from source zone if moving between zones
       if (sourceZone === 'rows') {
@@ -171,7 +182,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
         return
       }
 
-      let newConfig = { ...config }
+      const newConfig = { ...config }
 
       // Remove from source zone
       if (sourceZone === 'rows') {
@@ -286,7 +297,7 @@ export function PivotPanel({ config, defaultConfig, availableFields, onConfigCha
   }, [defaultConfig, onConfigChange, updateURLImmediate])
 
   return (
-    <Card>
+    <Card className={className} style={style}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

@@ -1,6 +1,6 @@
 {
   "name": "shadcn-pivot-data-table-example",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": true,
   "description": "Enterprise-grade pivot table with interactive Next.js demo. For npm package, see the 'library' branch.",
   "author": "Chris Ren",

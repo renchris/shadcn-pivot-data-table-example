@@ -22,6 +22,10 @@ interface DraggableFieldProps {
   onRemove?: () => void
   inUse?: boolean // Indicates if field is already used in rows/columns/values
   index?: number // Position in the Row Groups/Pivot Columns list (for numbered badges)
+  /** Additional CSS class names for the Badge element */
+  className?: string
+  /** Inline styles for the Badge element */
+  style?: React.CSSProperties
 }
 
 const DraggableFieldComponent = ({
@@ -30,7 +34,9 @@ const DraggableFieldComponent = ({
   sourceZone = 'available',
   onRemove,
   inUse = false,
-  index
+  index,
+  className,
+  style
 }: DraggableFieldProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [dragState, setDragState] = useState<DragState>({ type: 'idle' })
@@ -85,8 +91,10 @@ const DraggableFieldComponent = ({
           className={cn(
             'cursor-move select-none transition-all hover:bg-accent gap-1',
             dragState.type === 'dragging' && 'opacity-50 cursor-grabbing',
-            inUse && 'bg-primary/10 border-primary/30'
+            inUse && 'bg-primary/10 border-primary/30',
+            className
           )}
+          style={style}
         >
           <span className="flex items-center gap-1.5">
             {getFieldIcon()}

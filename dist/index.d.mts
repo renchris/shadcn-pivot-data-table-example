@@ -21,7 +21,7 @@ import 'clsx';
 /**
  * Props for the PivotTable component
  */
-interface PivotTableProps {
+interface PivotTableProps extends React.ComponentProps<"div"> {
     /** Transformed pivot data rows */
     data: PivotRow[];
     /** Pivot configuration used for the transformation */
@@ -29,7 +29,7 @@ interface PivotTableProps {
     /** Metadata about the pivot result (row count, column count, unique values) */
     metadata: PivotMetadata;
 }
-declare const PivotTable: React$1.MemoExoticComponent<({ data, config, metadata }: PivotTableProps) => react_jsx_runtime.JSX.Element>;
+declare const PivotTable: React$1.MemoExoticComponent<({ data, config, metadata, className, style, ...props }: PivotTableProps) => react_jsx_runtime.JSX.Element>;
 
 interface PivotPanelProps {
     config: PivotConfig;
@@ -39,8 +39,12 @@ interface PivotPanelProps {
         type: string;
     }>;
     onConfigChange: (config: PivotConfig) => void;
+    /** Additional CSS class names for the root Card element */
+    className?: string;
+    /** Inline styles for the root Card element */
+    style?: React.CSSProperties;
 }
-declare function PivotPanel({ config, defaultConfig, availableFields, onConfigChange }: PivotPanelProps): react_jsx_runtime.JSX.Element;
+declare function PivotPanel({ config, defaultConfig, availableFields, onConfigChange, className, style }: PivotPanelProps): react_jsx_runtime.JSX.Element;
 
 interface ClientPivotWrapperProps {
     rawData: any[];
@@ -50,12 +54,22 @@ interface ClientPivotWrapperProps {
         name: string;
         type: string;
     }>;
+    /** Additional CSS class names for the root container */
+    className?: string;
+    /** Inline styles for the root container */
+    style?: React.CSSProperties;
+    /** Additional CSS class names for the PivotPanel */
+    panelClassName?: string;
+    /** Additional CSS class names for the results Card */
+    resultsClassName?: string;
+    /** Additional CSS class names for the PivotTable */
+    tableClassName?: string;
 }
 /**
  * Client-side pivot wrapper that performs instant transformations
  * This achieves AG Grid-level performance (50-80ms) by avoiding server round-trips
  */
-declare function ClientPivotWrapper({ rawData, initialConfig, defaultConfig, availableFields, }: ClientPivotWrapperProps): react_jsx_runtime.JSX.Element;
+declare function ClientPivotWrapper({ rawData, initialConfig, defaultConfig, availableFields, className, style, panelClassName, resultsClassName, tableClassName, }: ClientPivotWrapperProps): react_jsx_runtime.JSX.Element;
 
 interface DraggableFieldProps {
     field: string;
@@ -64,12 +78,16 @@ interface DraggableFieldProps {
     onRemove?: () => void;
     inUse?: boolean;
     index?: number;
+    /** Additional CSS class names for the Badge element */
+    className?: string;
+    /** Inline styles for the Badge element */
+    style?: React.CSSProperties;
 }
 /**
  * Memoized DraggableField component to prevent unnecessary re-renders
  * Only re-renders when field, fieldType, sourceZone, or onRemove changes
  */
-declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove, inUse, index }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
+declare const DraggableField: React$1.MemoExoticComponent<({ field, fieldType, sourceZone, onRemove, inUse, index, className, style }: DraggableFieldProps) => react_jsx_runtime.JSX.Element>;
 
 interface DropZoneProps {
     label: string;
@@ -83,18 +101,34 @@ interface DropZoneProps {
         name: string;
         type: string;
     }>;
+    /** Additional CSS class names for the root container */
+    className?: string;
+    /** Inline styles for the root container */
+    style?: React.CSSProperties;
+    /** Additional CSS class names for the drop target area */
+    dropAreaClassName?: string;
 }
 /**
  * Memoized DropZone component to prevent unnecessary re-renders
  * Only re-renders when props change (label, description, fields, handlers, zone, availableFields)
  */
-declare const DropZone: React$1.MemoExoticComponent<({ label, description, fields, onFieldAdd, onFieldRemove, onFieldReorder, zone, availableFields, }: DropZoneProps) => react_jsx_runtime.JSX.Element>;
+declare const DropZone: React$1.MemoExoticComponent<({ label, description, fields, onFieldAdd, onFieldRemove, onFieldReorder, zone, availableFields, className, style, dropAreaClassName, }: DropZoneProps) => react_jsx_runtime.JSX.Element>;
 
 interface ExportDialogProps {
+    /** Pivot data to export */
     data: any[];
+    /** Optional filename (without extension) */
     filename?: string;
+    /** Additional CSS class names for the trigger button */
+    className?: string;
+    /** Inline styles for the trigger button */
+    style?: React.CSSProperties;
+    /** Additional CSS class names for the dialog content */
+    dialogClassName?: string;
+    /** Inline styles for the dialog content */
+    dialogStyle?: React.CSSProperties;
 }
-declare function ExportDialog({ data, filename }: ExportDialogProps): react_jsx_runtime.JSX.Element;
+declare function ExportDialog({ data, filename, className, style, dialogClassName, dialogStyle }: ExportDialogProps): react_jsx_runtime.JSX.Element;
 
 declare const buttonVariants: (props?: ({
     variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;

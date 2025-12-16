@@ -1,5 +1,25 @@
 # shadcn-pivot-data-table-example
 
+## 2.4.0
+
+### Minor Changes
+
+- feat: add styling composability to all pivot components
+
+  All pivot components now accept `className` and `style` props following Shadcn UI patterns:
+
+  - `PivotTable`: className, style
+  - `PivotPanel`: className, style
+  - `ExportDialog`: className, style, dialogClassName, dialogStyle
+  - `ClientPivotWrapper`: className, style, panelClassName, resultsClassName, tableClassName
+  - `DraggableField`: className, style
+  - `DropZone`: className, style, dropAreaClassName
+
+  This enables consumers to customize component styling without modifying library source code.
+  Classes are merged using `cn()` (Tailwind Merge + clsx) so custom classes override base classes.
+
+  Non-breaking change - all new props are optional.
+
 ## 2.3.0
 
 ### Minor Changes
