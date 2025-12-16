@@ -1,5 +1,28 @@
 # shadcn-pivot-data-table-example
 
+## 2.4.1
+
+### Patch Changes
+
+- chore: update dependencies to latest versions
+
+  Runtime dependencies:
+
+  - lucide-react: 0.553.0 → 0.561.0
+  - zod: 4.1.12 → 4.2.1
+
+  Dev dependencies:
+
+  - next: 16.0.3 → 16.0.10
+  - react: 19.2.0 → 19.2.3
+  - react-dom: 19.2.0 → 19.2.3
+  - @tanstack/react-virtual: 3.13.12 → 3.13.13
+  - tailwindcss: 4.1.17 → 4.1.18
+  - @playwright/test: 1.56.1 → 1.57.0
+  - nuqs: 2.7.3 → 2.8.5
+  - eslint: 9.39.1 → 9.39.2
+  - eslint-config-next: 16.0.3 → 16.0.10
+
 ## 2.4.0
 
 ### Minor Changes
