@@ -353,118 +353,104 @@ const PivotTableComponent = ({
   return (
     <div className={cn("space-y-4", className)} style={style} {...props}>
       {/* Table container with virtualization */}
-      <div
-        ref={parentRef}
-        className="overflow-auto border rounded-lg"
-        style={{ height: '600px' }}
-      >
-        <Table>
-          <TableHeader className="sticky top-0 z-30">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header, headerIndex) => {
-                  const isFirstColumn = (header.column.columnDef.meta as { isFirstColumn?: boolean })?.isFirstColumn || headerIndex === 0
-
-                  return (
-                    <TableHead
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      style={{ width: header.getSize() }}
-                      className={cn(
-                        // iOS 26 Liquid Glass - multi-layer effect with specular highlights
-                        "font-semibold",
-                        isFirstColumn
-                          // Intersection cell (top-left) - highest prominence
-                          ? "sticky left-0 z-50 liquid-glass-intersection"
-                          // Regular header cells
-                          : "z-10 liquid-glass-header"
-                      )}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {paddingTop > 0 && (
-              <tr>
-                <td
-                  colSpan={table.getVisibleFlatColumns().length}
-                  style={{ height: `${paddingTop}px` }}
-                />
-              </tr>
-            )}
-            {virtualRows.map((virtualRow) => {
-              const row = table.getRowModel().rows[virtualRow.index]
-              if (!row) return null
-
-              const isGrandTotal = row.original.__isGrandTotal
-              const isSubtotal = row.original.__isSubtotal
-              const level = row.depth
-              const isParent = row.getCanExpand()
-
-              return (
-                <TableRow
-                  key={row.id}
-                  data-index={virtualRow.index}
-                  className={cn(
-                    // Base styling - clean white background for leaf rows
-                    'transition-colors border-b',
-                    !isParent && !isGrandTotal && !isSubtotal && 'bg-background',
-
-                    // Parent row backgrounds - stronger "section" effect
-                    isParent && level === 0 && !isGrandTotal && !isSubtotal && 'bg-muted/20 border-t border-t-muted/30',
-                    isParent && level > 0 && !isGrandTotal && !isSubtotal && 'bg-muted/15',
-
-                    // Totals styling (overrides backgrounds)
-                    isGrandTotal && 'bg-accent font-bold border-t-2 border-t-border',
-                    isSubtotal && 'bg-muted/30 font-semibold',
-
-                    // Enhanced hover (only for non-total rows)
-                    !isGrandTotal && !isSubtotal && isParent && 'hover:bg-muted/30 hover:shadow-sm',
-                    !isGrandTotal && !isSubtotal && !isParent && 'hover:bg-muted/40 hover:shadow-sm'
-                  )}
-                >
-                  {row.getVisibleCells().map((cell, cellIndex) => {
-                    const isFirstCol = (cell.column.columnDef.meta as { isFirstColumn?: boolean })?.isFirstColumn || cellIndex === 0
-
+      <div className="border rounded-lg overflow-hidden">
+        <div
+          ref={parentRef}
+          className="overflow-auto"
+          style={{ height: '600px' }}
+        >
+          <Table>
+            <TableHeader className="sticky top-0 z-20 bg-background">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="border-b bg-muted/50">
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    const isFirstColumn = headerIndex === 0
                     return (
-                      <TableCell
-                        key={cell.id}
-                        style={{ width: cell.column.getSize() }}
+                      <TableHead
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        style={{ width: header.getSize() }}
                         className={cn(
-                          // iOS 26 Liquid Glass for sticky first column
-                          isFirstCol && "sticky left-0 z-20",
-                          // Apply appropriate liquid glass variant based on row type
-                          isFirstCol && !isGrandTotal && !isSubtotal && !isParent && "liquid-glass-cell",
-                          isFirstCol && (isGrandTotal || isSubtotal) && "liquid-glass-cell-accent",
-                          isFirstCol && isParent && !isGrandTotal && !isSubtotal && "liquid-glass-cell-muted",
+                          "font-semibold bg-muted/50",
+                          isFirstColumn && "sticky left-0 z-30 bg-muted/80"
                         )}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
                     )
                   })}
                 </TableRow>
-              )
-            })}
-            {paddingBottom > 0 && (
-              <tr>
-                <td
-                  colSpan={table.getVisibleFlatColumns().length}
-                  style={{ height: `${paddingBottom}px` }}
-                />
-              </tr>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {paddingTop > 0 && (
+                <tr>
+                  <td
+                    colSpan={table.getVisibleFlatColumns().length}
+                    style={{ height: `${paddingTop}px` }}
+                  />
+                </tr>
+              )}
+              {virtualRows.map((virtualRow) => {
+                const row = table.getRowModel().rows[virtualRow.index]
+                if (!row) return null
+
+                const isGrandTotal = row.original.__isGrandTotal
+                const isSubtotal = row.original.__isSubtotal
+                const level = row.depth
+                const isParent = row.getCanExpand()
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-index={virtualRow.index}
+                    className={cn(
+                      'transition-colors border-b',
+                      !isParent && !isGrandTotal && !isSubtotal && 'bg-background',
+                      isParent && level === 0 && !isGrandTotal && !isSubtotal && 'bg-muted/20 border-t border-t-muted/30',
+                      isParent && level > 0 && !isGrandTotal && !isSubtotal && 'bg-muted/15',
+                      isGrandTotal && 'bg-accent font-bold border-t-2 border-t-border',
+                      isSubtotal && 'bg-muted/30 font-semibold',
+                      !isGrandTotal && !isSubtotal && isParent && 'hover:bg-muted/30',
+                      !isGrandTotal && !isSubtotal && !isParent && 'hover:bg-muted/50'
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell, cellIndex) => {
+                      const isFirstCol = cellIndex === 0
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          style={{ width: cell.column.getSize() }}
+                          className={cn(
+                            isFirstCol && "sticky left-0 z-10 bg-background",
+                            isFirstCol && isParent && "bg-muted/20",
+                            isFirstCol && isGrandTotal && "bg-accent",
+                            isFirstCol && isSubtotal && "bg-muted/30"
+                          )}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+              {paddingBottom > 0 && (
+                <tr>
+                  <td
+                    colSpan={table.getVisibleFlatColumns().length}
+                    style={{ height: `${paddingBottom}px` }}
+                  />
+                </tr>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Table info */}
