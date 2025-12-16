@@ -134,6 +134,63 @@ npm publish --tag beta
 
 ---
 
+## 🔗 Using as Import Library + Demo Page
+
+### 1. Add Library Dependency
+
+```json
+{
+  "dependencies": {
+    "pivot-table-library": "git+ssh://git@github.com/YOUR_ORG/pivot-table-library.git#v2.5.0"
+  }
+}
+```
+
+### 2. Install Shadcn Components
+
+```bash
+bunx shadcn@latest add table button popover select checkbox card skeleton badge scroll-area
+```
+
+### 3. Copy Demo Page (Minimal Refactor)
+
+Copy these paths into your Next.js app:
+
+```
+src/app/pivot/           →  app/pivot/
+src/app/actions/pivot.ts →  app/actions/pivot.ts
+src/lib/pivot/scenarios.ts → lib/pivot/scenarios.ts
+```
+
+### 4. Update Imports
+
+Find and replace in copied files:
+
+| From | To |
+|------|-----|
+| `@/components/pivot-table` | `pivot-table-library` |
+| `@/lib/pivot/schemas` | `pivot-table-library` |
+| `@/lib/pivot/types` | `pivot-table-library` |
+| `@/components/ui/` | `@/components/ui/` (keep as-is, uses your shadcn) |
+| `@/lib/pivot/scenarios` | `@/lib/pivot/scenarios` (keep as-is, local copy) |
+| `@/app/actions/pivot` | `@/app/actions/pivot` (keep as-is, local copy) |
+
+### 5. Configure Path Alias
+
+Ensure `tsconfig.json` has:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+---
+
 ## 📝 Usage Examples
 
 ### Basic Usage (Styled Components)

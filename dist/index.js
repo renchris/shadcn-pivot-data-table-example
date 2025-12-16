@@ -2,7 +2,7 @@
 
 var chunkQSC4UIVT_js = require('./chunk-QSC4UIVT.js');
 var chunk6M575PJF_js = require('./chunk-6M575PJF.js');
-var chunkNCGJ3B7T_js = require('./chunk-NCGJ3B7T.js');
+var chunkYMPLWN6I_js = require('./chunk-YMPLWN6I.js');
 var react = require('react');
 var isEqual = require('fast-deep-equal');
 var reactTable = require('@tanstack/react-table');
@@ -270,7 +270,7 @@ var PivotTableComponent = ({
     if (config.columnFields.length === 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `value_${valueField.field}`,
+          id: `value_${valueField.field}_${valueField.aggregation}`,
           accessorKey: valueField.displayName || valueField.field,
           header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
           cell: ({ getValue, row }) => {
@@ -298,8 +298,8 @@ var PivotTableComponent = ({
       for (const combination of columnCombinations) {
         const groupLabel = combination.join(" - ");
         const groupColumns = config.valueFields.map((valueField) => ({
-          id: `pivot_${chunkNCGJ3B7T_js.generateColumnKey(combination, valueField.displayName || valueField.field)}`,
-          accessorKey: chunkNCGJ3B7T_js.generateColumnKey(combination, valueField.displayName || valueField.field),
+          id: `pivot_${chunkYMPLWN6I_js.generateColumnKey(combination, valueField.displayName || valueField.field)}`,
+          accessorKey: chunkYMPLWN6I_js.generateColumnKey(combination, valueField.displayName || valueField.field),
           header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
           cell: ({ getValue, row }) => {
             const value = getValue();
@@ -336,8 +336,8 @@ var PivotTableComponent = ({
     if (config.options.showRowTotals && config.columnFields.length > 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `__total_${valueField.field}`,
-          accessorKey: `__total_${valueField.field}`,
+          id: `__total_${valueField.field}_${valueField.aggregation}`,
+          accessorKey: `__total_${valueField.displayName || valueField.field}`,
           header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: `Total ${valueField.displayName || formatFieldName(valueField.field)}` }),
           cell: ({ getValue, row }) => {
             const value = getValue();
@@ -1541,7 +1541,7 @@ function ClientPivotWrapper({
       const cached = transformCache.current.get(configHash);
       return cached.result;
     }
-    const result = chunkNCGJ3B7T_js.transformToPivot(rawData, config);
+    const result = chunkYMPLWN6I_js.transformToPivot(rawData, config);
     transformCache.current.set(configHash, {
       result,
       timestamp: Date.now()
@@ -1891,91 +1891,91 @@ Object.defineProperty(exports, "cn", {
 });
 Object.defineProperty(exports, "AggregationFunctionSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.AggregationFunctionSchema; }
+  get: function () { return chunkYMPLWN6I_js.AggregationFunctionSchema; }
 });
 Object.defineProperty(exports, "ExportConfigSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.ExportConfigSchema; }
+  get: function () { return chunkYMPLWN6I_js.ExportConfigSchema; }
 });
 Object.defineProperty(exports, "ExportFormatSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.ExportFormatSchema; }
+  get: function () { return chunkYMPLWN6I_js.ExportFormatSchema; }
 });
 Object.defineProperty(exports, "PivotConfigSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.PivotConfigSchema; }
+  get: function () { return chunkYMPLWN6I_js.PivotConfigSchema; }
 });
 Object.defineProperty(exports, "PivotMetadataSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.PivotMetadataSchema; }
+  get: function () { return chunkYMPLWN6I_js.PivotMetadataSchema; }
 });
 Object.defineProperty(exports, "PivotResultSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.PivotResultSchema; }
+  get: function () { return chunkYMPLWN6I_js.PivotResultSchema; }
 });
 Object.defineProperty(exports, "ValueFieldConfigSchema", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.ValueFieldConfigSchema; }
+  get: function () { return chunkYMPLWN6I_js.ValueFieldConfigSchema; }
 });
 Object.defineProperty(exports, "aggregate", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.aggregate; }
+  get: function () { return chunkYMPLWN6I_js.aggregate; }
 });
 Object.defineProperty(exports, "aggregationFunctions", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.aggregationFunctions; }
+  get: function () { return chunkYMPLWN6I_js.aggregationFunctions; }
 });
 Object.defineProperty(exports, "avg", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.avg; }
+  get: function () { return chunkYMPLWN6I_js.avg; }
 });
 Object.defineProperty(exports, "count", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.count; }
+  get: function () { return chunkYMPLWN6I_js.count; }
 });
 Object.defineProperty(exports, "first", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.first; }
+  get: function () { return chunkYMPLWN6I_js.first; }
 });
 Object.defineProperty(exports, "formatAggregationName", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.formatAggregationName; }
+  get: function () { return chunkYMPLWN6I_js.formatAggregationName; }
 });
 Object.defineProperty(exports, "generateColumnKey", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.generateColumnKey; }
+  get: function () { return chunkYMPLWN6I_js.generateColumnKey; }
 });
 Object.defineProperty(exports, "getAggregationFunction", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.getAggregationFunction; }
+  get: function () { return chunkYMPLWN6I_js.getAggregationFunction; }
 });
 Object.defineProperty(exports, "last", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.last; }
+  get: function () { return chunkYMPLWN6I_js.last; }
 });
 Object.defineProperty(exports, "max", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.max; }
+  get: function () { return chunkYMPLWN6I_js.max; }
 });
 Object.defineProperty(exports, "median", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.median; }
+  get: function () { return chunkYMPLWN6I_js.median; }
 });
 Object.defineProperty(exports, "min", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.min; }
+  get: function () { return chunkYMPLWN6I_js.min; }
 });
 Object.defineProperty(exports, "parseColumnKey", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.parseColumnKey; }
+  get: function () { return chunkYMPLWN6I_js.parseColumnKey; }
 });
 Object.defineProperty(exports, "sum", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.sum; }
+  get: function () { return chunkYMPLWN6I_js.sum; }
 });
 Object.defineProperty(exports, "transformToPivot", {
   enumerable: true,
-  get: function () { return chunkNCGJ3B7T_js.transformToPivot; }
+  get: function () { return chunkYMPLWN6I_js.transformToPivot; }
 });
 exports.Badge = Badge;
 exports.Button = Button;

@@ -1,4 +1,6 @@
-import { z } from 'zod';
+'use strict';
+
+var zod = require('zod');
 
 // src/lib/pivot/aggregations.ts
 var sum = (values) => {
@@ -314,6 +316,7 @@ function addRowTotals(data, config, uniqueColumnValues) {
     for (const valueField of config.valueFields) {
       const values = [];
       const displayName = valueField.displayName || valueField.field;
+      const totalKey = `__total_${displayName}`;
       for (const combination of combinations) {
         const columnKey = [...combination, displayName].join("__");
         if (rowWithTotal[columnKey] !== null && rowWithTotal[columnKey] !== void 0) {
@@ -322,25 +325,25 @@ function addRowTotals(data, config, uniqueColumnValues) {
       }
       const aggregateFn = valueField.aggregation;
       if (aggregateFn === "count" || aggregateFn === "sum") {
-        rowWithTotal["__TOTAL__"] = values.reduce((sum2, val) => sum2 + Number(val || 0), 0);
+        rowWithTotal[totalKey] = values.reduce((sum2, val) => sum2 + Number(val || 0), 0);
       } else if (aggregateFn === "avg") {
         const sum2 = values.reduce((sum3, val) => sum3 + Number(val || 0), 0);
-        rowWithTotal["__TOTAL__"] = values.length > 0 ? sum2 / values.length : 0;
+        rowWithTotal[totalKey] = values.length > 0 ? sum2 / values.length : 0;
       } else if (aggregateFn === "min") {
-        rowWithTotal["__TOTAL__"] = values.length > 0 ? Math.min(...values.map(Number)) : 0;
+        rowWithTotal[totalKey] = values.length > 0 ? Math.min(...values.map(Number)) : 0;
       } else if (aggregateFn === "max") {
-        rowWithTotal["__TOTAL__"] = values.length > 0 ? Math.max(...values.map(Number)) : 0;
+        rowWithTotal[totalKey] = values.length > 0 ? Math.max(...values.map(Number)) : 0;
       } else if (aggregateFn === "first") {
-        rowWithTotal["__TOTAL__"] = values.length > 0 ? values[0] : void 0;
+        rowWithTotal[totalKey] = values.length > 0 ? values[0] : void 0;
       } else if (aggregateFn === "last") {
-        rowWithTotal["__TOTAL__"] = values.length > 0 ? values[values.length - 1] : void 0;
+        rowWithTotal[totalKey] = values.length > 0 ? values[values.length - 1] : void 0;
       } else if (aggregateFn === "median") {
         if (values.length > 0) {
           const sorted = [...values].map(Number).sort((a, b) => a - b);
           const mid = Math.floor(sorted.length / 2);
-          rowWithTotal["__TOTAL__"] = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+          rowWithTotal[totalKey] = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
         } else {
-          rowWithTotal["__TOTAL__"] = 0;
+          rowWithTotal[totalKey] = 0;
         }
       }
     }
@@ -362,7 +365,6 @@ function addColumnTotals(data, config, uniqueColumnValues) {
     columnTotalRow[config.columnFields[0]] = "__COLUMN_TOTAL__";
   }
   const firstRow = data[0];
-  let grandTotal = 0;
   for (const key of Object.keys(firstRow)) {
     if (key.startsWith("__")) continue;
     if (config.rowFields.includes(key)) continue;
@@ -370,13 +372,17 @@ function addColumnTotals(data, config, uniqueColumnValues) {
     if (values.length > 0) {
       const total = values.reduce((sum2, val) => sum2 + Number(val), 0);
       columnTotalRow[key] = total;
-      if (key !== "__TOTAL__") {
-        grandTotal += total;
-      }
     }
   }
   if (config.options.showRowTotals) {
-    columnTotalRow["__TOTAL__"] = grandTotal;
+    for (const valueField of config.valueFields) {
+      const displayName = valueField.displayName || valueField.field;
+      const totalKey = `__total_${displayName}`;
+      const values = data.filter((row) => !row.__isGrandTotal && !row.__isColumnTotal && !row.__isSubtotal).map((row) => row[totalKey]).filter((val) => val !== null && val !== void 0 && !isNaN(Number(val)));
+      if (values.length > 0) {
+        columnTotalRow[totalKey] = values.reduce((sum2, val) => sum2 + Number(val), 0);
+      }
+    }
   }
   data.push(columnTotalRow);
   return data;
@@ -422,7 +428,7 @@ function parseColumnKey(key, columnFieldCount) {
   const valueField = parts.slice(columnFieldCount).join("__");
   return { columnValues, valueField };
 }
-var AggregationFunctionSchema = z.enum([
+var AggregationFunctionSchema = zod.z.enum([
   "sum",
   "avg",
   "count",
@@ -432,26 +438,26 @@ var AggregationFunctionSchema = z.enum([
   "first",
   "last"
 ]);
-var ValueFieldConfigSchema = z.object({
-  field: z.string(),
+var ValueFieldConfigSchema = zod.z.object({
+  field: zod.z.string(),
   aggregation: AggregationFunctionSchema,
-  displayName: z.string().optional()
+  displayName: zod.z.string().optional()
 });
-var PivotConfigSchema = z.object({
+var PivotConfigSchema = zod.z.object({
   // Fields to group by (become row headers)
-  rowFields: z.array(z.string()).default([]),
+  rowFields: zod.z.array(zod.z.string()).default([]),
   // Fields to pivot (become column headers)
-  columnFields: z.array(z.string()).default([]),
+  columnFields: zod.z.array(zod.z.string()).default([]),
   // Fields to aggregate with their aggregation functions
-  valueFields: z.array(ValueFieldConfigSchema).min(1, "At least one value field is required"),
+  valueFields: zod.z.array(ValueFieldConfigSchema).min(1, "At least one value field is required"),
   // Optional filter configuration
-  filters: z.record(z.string(), z.any()).optional(),
+  filters: zod.z.record(zod.z.string(), zod.z.any()).optional(),
   // Configuration options
-  options: z.object({
-    showRowTotals: z.boolean().default(true),
-    showColumnTotals: z.boolean().default(true),
-    showGrandTotal: z.boolean().default(true),
-    expandedByDefault: z.boolean().default(false)
+  options: zod.z.object({
+    showRowTotals: zod.z.boolean().default(true),
+    showColumnTotals: zod.z.boolean().default(true),
+    showGrandTotal: zod.z.boolean().default(true),
+    expandedByDefault: zod.z.boolean().default(false)
   }).default({
     showRowTotals: true,
     showColumnTotals: true,
@@ -459,24 +465,45 @@ var PivotConfigSchema = z.object({
     expandedByDefault: false
   })
 });
-var PivotMetadataSchema = z.object({
-  rowCount: z.number(),
-  columnCount: z.number(),
-  uniqueValues: z.record(z.string(), z.array(z.string())),
-  totalRows: z.number().optional()
+var PivotMetadataSchema = zod.z.object({
+  rowCount: zod.z.number(),
+  columnCount: zod.z.number(),
+  uniqueValues: zod.z.record(zod.z.string(), zod.z.array(zod.z.string())),
+  totalRows: zod.z.number().optional()
 });
-var PivotResultSchema = z.object({
-  data: z.array(z.record(z.string(), z.any())),
+var PivotResultSchema = zod.z.object({
+  data: zod.z.array(zod.z.record(zod.z.string(), zod.z.any())),
   metadata: PivotMetadataSchema,
   config: PivotConfigSchema
 });
-var ExportFormatSchema = z.enum(["csv", "excel", "json"]);
-var ExportConfigSchema = z.object({
+var ExportFormatSchema = zod.z.enum(["csv", "excel", "json"]);
+var ExportConfigSchema = zod.z.object({
   format: ExportFormatSchema,
-  includeTotals: z.boolean().default(true),
-  filename: z.string().optional()
+  includeTotals: zod.z.boolean().default(true),
+  filename: zod.z.string().optional()
 });
 
-export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot };
-//# sourceMappingURL=chunk-QHZDHSXN.mjs.map
-//# sourceMappingURL=chunk-QHZDHSXN.mjs.map
+exports.AggregationFunctionSchema = AggregationFunctionSchema;
+exports.ExportConfigSchema = ExportConfigSchema;
+exports.ExportFormatSchema = ExportFormatSchema;
+exports.PivotConfigSchema = PivotConfigSchema;
+exports.PivotMetadataSchema = PivotMetadataSchema;
+exports.PivotResultSchema = PivotResultSchema;
+exports.ValueFieldConfigSchema = ValueFieldConfigSchema;
+exports.aggregate = aggregate;
+exports.aggregationFunctions = aggregationFunctions;
+exports.avg = avg;
+exports.count = count;
+exports.first = first;
+exports.formatAggregationName = formatAggregationName;
+exports.generateColumnKey = generateColumnKey;
+exports.getAggregationFunction = getAggregationFunction;
+exports.last = last;
+exports.max = max;
+exports.median = median;
+exports.min = min;
+exports.parseColumnKey = parseColumnKey;
+exports.sum = sum;
+exports.transformToPivot = transformToPivot;
+//# sourceMappingURL=chunk-YMPLWN6I.js.map
+//# sourceMappingURL=chunk-YMPLWN6I.js.map

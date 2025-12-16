@@ -1,8 +1,8 @@
 import { cn } from './chunk-KUMWZD66.mjs';
 export { cn } from './chunk-KUMWZD66.mjs';
 import { exportPivotData } from './chunk-SO753ZME.mjs';
-import { generateColumnKey, transformToPivot } from './chunk-QHZDHSXN.mjs';
-export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot } from './chunk-QHZDHSXN.mjs';
+import { generateColumnKey, transformToPivot } from './chunk-SZDQ7MDO.mjs';
+export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot } from './chunk-SZDQ7MDO.mjs';
 import { memo, useRef, useState, useMemo, useCallback, useEffect, useTransition } from 'react';
 import isEqual from 'fast-deep-equal';
 import { useReactTable, getExpandedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
@@ -240,7 +240,7 @@ var PivotTableComponent = ({
     if (config.columnFields.length === 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `value_${valueField.field}`,
+          id: `value_${valueField.field}_${valueField.aggregation}`,
           accessorKey: valueField.displayName || valueField.field,
           header: () => /* @__PURE__ */ jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
           cell: ({ getValue, row }) => {
@@ -306,8 +306,8 @@ var PivotTableComponent = ({
     if (config.options.showRowTotals && config.columnFields.length > 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `__total_${valueField.field}`,
-          accessorKey: `__total_${valueField.field}`,
+          id: `__total_${valueField.field}_${valueField.aggregation}`,
+          accessorKey: `__total_${valueField.displayName || valueField.field}`,
           header: () => /* @__PURE__ */ jsx("div", { className: "text-right", children: `Total ${valueField.displayName || formatFieldName(valueField.field)}` }),
           cell: ({ getValue, row }) => {
             const value = getValue();
