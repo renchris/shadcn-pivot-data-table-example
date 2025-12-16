@@ -6,6 +6,7 @@ import { PivotTable } from './pivot-table'
 import { PivotPanel } from './pivot-panel'
 import { ExportDialog } from './export-dialog'
 import { transformToPivot } from '../../lib/pivot/transformer'
+import { hashPivotConfig } from '../../lib/pivot/hash'
 import type { PivotConfig, PivotResult } from '../../lib/pivot/schemas'
 import { cn } from '../../lib/utils'
 
@@ -49,8 +50,8 @@ export function ClientPivotWrapper({
 
   // Transform data client-side with LRU caching
   const pivotResult = useMemo(() => {
-    // Generate cache key from config
-    const configHash = JSON.stringify(config)
+    // Generate cache key using efficient hash (avoids JSON.stringify allocations)
+    const configHash = hashPivotConfig(config)
 
     // Check cache first
     if (transformCache.current.has(configHash)) {
@@ -67,8 +68,8 @@ export function ClientPivotWrapper({
       timestamp: Date.now(),
     })
 
-    // LRU eviction: keep only last 10 entries
-    if (transformCache.current.size > 10) {
+    // LRU eviction: keep only last 5 entries (reduced from 10 to save memory)
+    if (transformCache.current.size > 5) {
       // Find oldest entry by timestamp
       let oldestKey = ''
       let oldestTime = Infinity

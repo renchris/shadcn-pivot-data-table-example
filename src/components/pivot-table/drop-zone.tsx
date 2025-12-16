@@ -90,7 +90,7 @@ const DropZoneComponent = ({
           <div className="flex flex-wrap gap-2">
             {fields.map((field, index) => (
               <ReorderableField
-                key={`${field}-${index}`}
+                key={field}
                 field={field}
                 index={index}
                 fieldType={getFieldType(field)}
@@ -122,7 +122,7 @@ interface ReorderableFieldProps {
   onReorder?: (sourceField: string, targetField: string, edge: Edge) => void
 }
 
-const ReorderableField = ({
+const ReorderableFieldComponent = ({
   field,
   index,
   fieldType,
@@ -195,6 +195,12 @@ const ReorderableField = ({
     </div>
   )
 }
+
+/**
+ * Memoized ReorderableField component to prevent DnD listener churn
+ * Only re-renders when field, index, zone, or handlers change
+ */
+const ReorderableField = memo(ReorderableFieldComponent)
 
 /**
  * Memoized DropZone component to prevent unnecessary re-renders

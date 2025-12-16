@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useRef, memo, useState } from 'react'
+import { useMemo, useRef, memo, useState, useCallback } from 'react'
+import isEqual from 'fast-deep-equal'
 import {
   type ColumnDef,
   type ExpandedState,
@@ -64,8 +65,11 @@ const PivotTableComponent = ({
 }: PivotTableProps) => {
   const parentRef = useRef<HTMLDivElement>(null)
 
-  // Initialize expanded state - all rows expanded by default
-  const [expanded, setExpanded] = useState<ExpandedState>(true)
+  // Initialize expanded state from config - default to collapsed for performance
+  // Setting true expands ALL rows which is expensive for large datasets
+  const [expanded, setExpanded] = useState<ExpandedState>(() =>
+    config.options.expandedByDefault ? true : {}
+  )
 
   // Generate column definitions dynamically based on configuration
   const columns = useMemo<ColumnDef<PivotRow>[]>(() => {
@@ -323,11 +327,16 @@ const PivotTableComponent = ({
     getExpandedRowModel: getExpandedRowModel(),
   })
 
+  // Memoize virtualizer callbacks to prevent recreation on every render
+  // This prevents virtualizer from reinitializing and leaking memory
+  const getScrollElement = useCallback(() => parentRef.current, [])
+  const estimateSize = useCallback(() => 35, [])
+
   // Initialize row virtualizer (for vertical scrolling)
   const rowVirtualizer = useVirtualizer({
     count: table.getRowModel().rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 35,
+    getScrollElement,
+    estimateSize,
     overscan: 10,
   })
 
@@ -350,7 +359,7 @@ const PivotTableComponent = ({
         style={{ height: '600px' }}
       >
         <Table>
-          <TableHeader className="sticky top-0">
+          <TableHeader className="sticky top-0 z-30">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header, headerIndex) => {
@@ -362,10 +371,13 @@ const PivotTableComponent = ({
                       colSpan={header.colSpan}
                       style={{ width: header.getSize() }}
                       className={cn(
-                        "bg-muted/40 border-b-2 font-semibold",
+                        // iOS 26 Liquid Glass - multi-layer effect with specular highlights
+                        "font-semibold",
                         isFirstColumn
-                          ? "sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-                          : "z-10"
+                          // Intersection cell (top-left) - highest prominence
+                          ? "sticky left-0 z-50 liquid-glass-intersection"
+                          // Regular header cells
+                          : "z-10 liquid-glass-header"
                       )}
                     >
                       {header.isPlaceholder
@@ -428,11 +440,12 @@ const PivotTableComponent = ({
                         key={cell.id}
                         style={{ width: cell.column.getSize() }}
                         className={cn(
-                          isFirstCol && "sticky left-0 z-20 bg-background shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                          isFirstCol && isGrandTotal && "!bg-accent",
-                          isFirstCol && isSubtotal && "!bg-muted/30",
-                          isFirstCol && isParent && level === 0 && !isGrandTotal && !isSubtotal && "!bg-muted/20",
-                          isFirstCol && isParent && level > 0 && !isGrandTotal && !isSubtotal && "!bg-muted/15",
+                          // iOS 26 Liquid Glass for sticky first column
+                          isFirstCol && "sticky left-0 z-20",
+                          // Apply appropriate liquid glass variant based on row type
+                          isFirstCol && !isGrandTotal && !isSubtotal && !isParent && "liquid-glass-cell",
+                          isFirstCol && (isGrandTotal || isSubtotal) && "liquid-glass-cell-accent",
+                          isFirstCol && isParent && !isGrandTotal && !isSubtotal && "liquid-glass-cell-muted",
                         )}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -470,12 +483,13 @@ const PivotTableComponent = ({
 // Memoize component to prevent unnecessary re-renders
 export const PivotTable = memo(PivotTableComponent, (prevProps, nextProps) => {
   // Deep equality check for data, config, and styling props
+  // Using fast-deep-equal instead of JSON.stringify to avoid string allocations
   return (
     prevProps.data === nextProps.data &&
     prevProps.metadata === nextProps.metadata &&
     prevProps.className === nextProps.className &&
     prevProps.style === nextProps.style &&
-    JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config)
+    isEqual(prevProps.config, nextProps.config)
   )
 })
 

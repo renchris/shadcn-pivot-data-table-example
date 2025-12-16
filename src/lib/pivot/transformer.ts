@@ -552,7 +552,9 @@ function addColumnTotals(
     columnTotalRow['__TOTAL__'] = grandTotal
   }
 
-  return [...data, columnTotalRow]
+  // Push instead of spread to avoid full array copy (~100MB saved for large datasets)
+  data.push(columnTotalRow)
+  return data
 }
 
 /**
@@ -592,7 +594,9 @@ function addGrandTotal(
     }
   }
 
-  return [...data, grandTotal]
+  // Push instead of spread to avoid full array copy (~100MB saved for large datasets)
+  data.push(grandTotal)
+  return data
 }
 
 /**

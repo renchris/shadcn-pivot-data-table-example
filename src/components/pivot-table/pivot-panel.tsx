@@ -285,6 +285,17 @@ export function PivotPanel({
     })
   }, [handleReturnToAvailable])
 
+  // Memoized remove handlers for drop zones - prevents re-registration of DnD listeners
+  const handleRemoveRowField = useCallback(
+    (field: string) => handleRemoveField(field, 'rows'),
+    [handleRemoveField]
+  )
+
+  const handleRemoveColumnField = useCallback(
+    (field: string) => handleRemoveField(field, 'columns'),
+    [handleRemoveField]
+  )
+
   // Reset to scenario's default configuration
   const handleReset = useCallback(() => {
     // Use the scenario's default config instead of hardcoded values
@@ -362,7 +373,7 @@ export function PivotPanel({
           description="Fields to group by (rows)"
           fields={config.rowFields}
           onFieldAdd={handleAddRowField}
-          onFieldRemove={(field) => handleRemoveField(field, 'rows')}
+          onFieldRemove={handleRemoveRowField}
           onFieldReorder={handleReorderRowFields}
           zone="rows"
           availableFields={availableFields}
@@ -376,7 +387,7 @@ export function PivotPanel({
           description="Fields to pivot (columns)"
           fields={config.columnFields}
           onFieldAdd={handleAddColumnField}
-          onFieldRemove={(field) => handleRemoveField(field, 'columns')}
+          onFieldRemove={handleRemoveColumnField}
           onFieldReorder={handleReorderColumnFields}
           zone="columns"
           availableFields={availableFields}

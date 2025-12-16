@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -45,10 +45,27 @@ export function ExportDialog({
   const [format, setFormat] = useState<ExportFormat>('csv')
   const [isExporting, setIsExporting] = useState(false)
 
+  // Track mount state for safe async updates
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   const handleExport = async () => {
     setIsExporting(true)
+    let url: string | null = null
+
     try {
       const result = await exportPivotData(data, format)
+
+      // Check if component unmounted during async operation
+      if (!isMountedRef.current) {
+        return
+      }
 
       // Download the file
       let blob: Blob
@@ -65,22 +82,31 @@ export function ExportDialog({
         downloadFilename = `${filename}-${Date.now()}.json`
       }
 
-      // Create download link
-      const url = URL.createObjectURL(blob)
+      // Create download link - URL tracked for cleanup in finally
+      url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = downloadFilename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
 
-      setOpen(false)
+      if (isMountedRef.current) {
+        setOpen(false)
+      }
     } catch (error) {
       console.error('Export failed:', error)
-      alert('Export failed. Please try again.')
+      if (isMountedRef.current) {
+        alert('Export failed. Please try again.')
+      }
     } finally {
-      setIsExporting(false)
+      // Always revoke URL if it was created, regardless of success/error/unmount
+      if (url) {
+        URL.revokeObjectURL(url)
+      }
+      if (isMountedRef.current) {
+        setIsExporting(false)
+      }
     }
   }
 
