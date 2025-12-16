@@ -1,9 +1,10 @@
 import { cn } from './chunk-KUMWZD66.mjs';
 export { cn } from './chunk-KUMWZD66.mjs';
 import { exportPivotData } from './chunk-SO753ZME.mjs';
-import { generateColumnKey, transformToPivot } from './chunk-FCM6PMJF.mjs';
-export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot } from './chunk-FCM6PMJF.mjs';
-import { memo, useRef, useState, useMemo, useEffect, useTransition, useCallback } from 'react';
+import { generateColumnKey, transformToPivot } from './chunk-QHZDHSXN.mjs';
+export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot } from './chunk-QHZDHSXN.mjs';
+import { memo, useRef, useState, useMemo, useCallback, useEffect, useTransition } from 'react';
+import isEqual from 'fast-deep-equal';
 import { useReactTable, getExpandedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, ChevronRight, X, Type, ToggleLeft, Calendar, Hash, Settings2, Loader2, RefreshCw, XIcon, CircleIcon, Download, CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
@@ -27,18 +28,11 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 
 function Table({ className, ...props }) {
   return /* @__PURE__ */ jsx(
-    "div",
+    "table",
     {
-      "data-slot": "table-container",
-      className: "relative w-full overflow-x-auto",
-      children: /* @__PURE__ */ jsx(
-        "table",
-        {
-          "data-slot": "table",
-          className: cn("w-full caption-bottom text-sm", className),
-          ...props
-        }
-      )
+      "data-slot": "table",
+      className: cn("w-full caption-bottom text-sm", className),
+      ...props
     }
   );
 }
@@ -136,7 +130,9 @@ var PivotTableComponent = ({
   ...props
 }) => {
   const parentRef = useRef(null);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(
+    () => config.options.expandedByDefault ? true : {}
+  );
   const columns = useMemo(() => {
     const cols = [];
     if (config.rowFields.length === 0 && config.columnFields.length === 0) {
@@ -345,10 +341,12 @@ var PivotTableComponent = ({
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel()
   });
+  const getScrollElement = useCallback(() => parentRef.current, []);
+  const estimateSize = useCallback(() => 35, []);
   const rowVirtualizer = useVirtualizer({
     count: table.getRowModel().rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 35,
+    getScrollElement,
+    estimateSize,
     overscan: 10
   });
   const virtualRows = rowVirtualizer.getVirtualItems();
@@ -363,7 +361,7 @@ var PivotTableComponent = ({
         className: "overflow-auto border rounded-lg",
         style: { height: "600px" },
         children: /* @__PURE__ */ jsxs(Table, { children: [
-          /* @__PURE__ */ jsx(TableHeader, { className: "sticky top-0", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx(TableRow, { children: headerGroup.headers.map((header, headerIndex) => {
+          /* @__PURE__ */ jsx(TableHeader, { className: "sticky top-0 z-30", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx(TableRow, { children: headerGroup.headers.map((header, headerIndex) => {
             const isFirstColumn = header.column.columnDef.meta?.isFirstColumn || headerIndex === 0;
             return /* @__PURE__ */ jsx(
               TableHead,
@@ -371,8 +369,9 @@ var PivotTableComponent = ({
                 colSpan: header.colSpan,
                 style: { width: header.getSize() },
                 className: cn(
-                  "bg-muted/40 border-b-2 font-semibold",
-                  isFirstColumn ? "sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]" : "z-10"
+                  // iOS 26 Liquid Glass - multi-layer effect with specular highlights
+                  "font-semibold",
+                  isFirstColumn ? "sticky left-0 z-50 liquid-glass-intersection" : "z-10 liquid-glass-header"
                 ),
                 children: header.isPlaceholder ? null : flexRender(
                   header.column.columnDef.header,
@@ -422,11 +421,12 @@ var PivotTableComponent = ({
                       {
                         style: { width: cell.column.getSize() },
                         className: cn(
-                          isFirstCol && "sticky left-0 z-20 bg-background shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                          isFirstCol && isGrandTotal && "!bg-accent",
-                          isFirstCol && isSubtotal && "!bg-muted/30",
-                          isFirstCol && isParent && level === 0 && !isGrandTotal && !isSubtotal && "!bg-muted/20",
-                          isFirstCol && isParent && level > 0 && !isGrandTotal && !isSubtotal && "!bg-muted/15"
+                          // iOS 26 Liquid Glass for sticky first column
+                          isFirstCol && "sticky left-0 z-20",
+                          // Apply appropriate liquid glass variant based on row type
+                          isFirstCol && !isGrandTotal && !isSubtotal && !isParent && "liquid-glass-cell",
+                          isFirstCol && (isGrandTotal || isSubtotal) && "liquid-glass-cell-accent",
+                          isFirstCol && isParent && !isGrandTotal && !isSubtotal && "liquid-glass-cell-muted"
                         ),
                         children: flexRender(cell.column.columnDef.cell, cell.getContext())
                       },
@@ -464,7 +464,7 @@ var PivotTableComponent = ({
   ] });
 };
 var PivotTable = memo(PivotTableComponent, (prevProps, nextProps) => {
-  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && prevProps.className === nextProps.className && prevProps.style === nextProps.style && JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config);
+  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && prevProps.className === nextProps.className && prevProps.style === nextProps.style && isEqual(prevProps.config, nextProps.config);
 });
 PivotTable.displayName = "PivotTable";
 function generateCombinations(fields, uniqueValues) {
@@ -838,13 +838,13 @@ var DropZoneComponent = ({
             onRemove: () => onFieldRemove(field),
             onReorder: onFieldReorder
           },
-          `${field}-${index}`
+          field
         )) }) : /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground text-center", children: "Drag fields here" })
       }
     )
   ] });
 };
-var ReorderableField = ({
+var ReorderableFieldComponent = ({
   field,
   index,
   fieldType,
@@ -907,6 +907,7 @@ var ReorderableField = ({
     closestEdge === "right" && /* @__PURE__ */ jsx("div", { className: "absolute right-0 top-0 bottom-0 w-0.5 bg-primary rounded-full" })
   ] });
 };
+var ReorderableField = memo(ReorderableFieldComponent);
 var DropZone = memo(DropZoneComponent);
 function PivotPanel({
   config,
@@ -1079,6 +1080,14 @@ function PivotPanel({
       }
     });
   }, [handleReturnToAvailable]);
+  const handleRemoveRowField = useCallback(
+    (field) => handleRemoveField(field, "rows"),
+    [handleRemoveField]
+  );
+  const handleRemoveColumnField = useCallback(
+    (field) => handleRemoveField(field, "columns"),
+    [handleRemoveField]
+  );
   const handleReset = useCallback(() => {
     onConfigChange(defaultConfig);
     if (debounceTimeoutRef.current) {
@@ -1134,7 +1143,7 @@ function PivotPanel({
           description: "Fields to group by (rows)",
           fields: config.rowFields,
           onFieldAdd: handleAddRowField,
-          onFieldRemove: (field) => handleRemoveField(field, "rows"),
+          onFieldRemove: handleRemoveRowField,
           onFieldReorder: handleReorderRowFields,
           zone: "rows",
           availableFields
@@ -1148,7 +1157,7 @@ function PivotPanel({
           description: "Fields to pivot (columns)",
           fields: config.columnFields,
           onFieldAdd: handleAddColumnField,
-          onFieldRemove: (field) => handleRemoveField(field, "columns"),
+          onFieldRemove: handleRemoveColumnField,
           onFieldReorder: handleReorderColumnFields,
           zone: "columns",
           availableFields
@@ -1355,10 +1364,21 @@ function ExportDialog({
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState("csv");
   const [isExporting, setIsExporting] = useState(false);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const handleExport = async () => {
     setIsExporting(true);
+    let url = null;
     try {
       const result = await exportPivotData(data, format);
+      if (!isMountedRef.current) {
+        return;
+      }
       let blob;
       let downloadFilename;
       if (format === "csv") {
@@ -1371,20 +1391,28 @@ function ExportDialog({
         blob = new Blob([result], { type: "application/json" });
         downloadFilename = `${filename}-${Date.now()}.json`;
       }
-      const url = URL.createObjectURL(blob);
+      url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = downloadFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setOpen(false);
+      if (isMountedRef.current) {
+        setOpen(false);
+      }
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Export failed. Please try again.");
+      if (isMountedRef.current) {
+        alert("Export failed. Please try again.");
+      }
     } finally {
-      setIsExporting(false);
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+      if (isMountedRef.current) {
+        setIsExporting(false);
+      }
     }
   };
   return /* @__PURE__ */ jsxs(Dialog, { open, onOpenChange: setOpen, children: [
@@ -1433,6 +1461,37 @@ function ExportDialog({
     ] })
   ] });
 }
+
+// src/lib/pivot/hash.ts
+function djb2Hash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) + hash ^ str.charCodeAt(i);
+  }
+  return hash >>> 0;
+}
+function hashPivotConfig(config) {
+  const parts = [
+    // Row fields in order
+    "r:" + config.rowFields.join(","),
+    // Column fields in order
+    "c:" + config.columnFields.join(","),
+    // Value fields - field:aggregation:displayName
+    "v:" + config.valueFields.map((vf) => `${vf.field}:${vf.aggregation}:${vf.displayName || ""}`).join("|"),
+    // Options that affect output
+    "o:" + [
+      config.options.showRowTotals ? "1" : "0",
+      config.options.showColumnTotals ? "1" : "0",
+      config.options.showGrandTotal ? "1" : "0",
+      config.options.expandedByDefault ? "1" : "0"
+    ].join("")
+  ];
+  if (config.filters && Object.keys(config.filters).length > 0) {
+    parts.push("f:" + JSON.stringify(config.filters));
+  }
+  const hashInput = parts.join("|");
+  return djb2Hash(hashInput).toString(36);
+}
 function ClientPivotWrapper({
   rawData,
   initialConfig,
@@ -1447,7 +1506,7 @@ function ClientPivotWrapper({
   const [config, setConfig] = useState(initialConfig);
   const transformCache = useRef(/* @__PURE__ */ new Map());
   const pivotResult = useMemo(() => {
-    const configHash = JSON.stringify(config);
+    const configHash = hashPivotConfig(config);
     if (transformCache.current.has(configHash)) {
       const cached = transformCache.current.get(configHash);
       return cached.result;
@@ -1457,7 +1516,7 @@ function ClientPivotWrapper({
       result,
       timestamp: Date.now()
     });
-    if (transformCache.current.size > 10) {
+    if (transformCache.current.size > 5) {
       let oldestKey = "";
       let oldestTime = Infinity;
       for (const [key, value] of transformCache.current.entries()) {

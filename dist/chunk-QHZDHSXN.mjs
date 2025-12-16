@@ -378,7 +378,8 @@ function addColumnTotals(data, config, uniqueColumnValues) {
   if (config.options.showRowTotals) {
     columnTotalRow["__TOTAL__"] = grandTotal;
   }
-  return [...data, columnTotalRow];
+  data.push(columnTotalRow);
+  return data;
 }
 function addGrandTotal(data, config) {
   if (data.length === 0) return data;
@@ -399,7 +400,8 @@ function addGrandTotal(data, config) {
       grandTotal[key] = values.reduce((sum2, val) => sum2 + Number(val), 0);
     }
   }
-  return [...data, grandTotal];
+  data.push(grandTotal);
+  return data;
 }
 function calculateColumnCount(uniqueColumnValues, valueFields) {
   if (Object.keys(uniqueColumnValues).length === 0) {
@@ -476,5 +478,5 @@ var ExportConfigSchema = z.object({
 });
 
 export { AggregationFunctionSchema, ExportConfigSchema, ExportFormatSchema, PivotConfigSchema, PivotMetadataSchema, PivotResultSchema, ValueFieldConfigSchema, aggregate, aggregationFunctions, avg, count, first, formatAggregationName, generateColumnKey, getAggregationFunction, last, max, median, min, parseColumnKey, sum, transformToPivot };
-//# sourceMappingURL=chunk-FCM6PMJF.mjs.map
-//# sourceMappingURL=chunk-FCM6PMJF.mjs.map
+//# sourceMappingURL=chunk-QHZDHSXN.mjs.map
+//# sourceMappingURL=chunk-QHZDHSXN.mjs.map

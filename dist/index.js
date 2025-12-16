@@ -2,8 +2,9 @@
 
 var chunkQSC4UIVT_js = require('./chunk-QSC4UIVT.js');
 var chunk6M575PJF_js = require('./chunk-6M575PJF.js');
-var chunk3V676C77_js = require('./chunk-3V676C77.js');
+var chunkNCGJ3B7T_js = require('./chunk-NCGJ3B7T.js');
 var react = require('react');
+var isEqual = require('fast-deep-equal');
 var reactTable = require('@tanstack/react-table');
 var reactVirtual = require('@tanstack/react-virtual');
 var lucideReact = require('lucide-react');
@@ -25,6 +26,8 @@ var DropdownMenuPrimitive = require('@radix-ui/react-dropdown-menu');
 var ScrollAreaPrimitive = require('@radix-ui/react-scroll-area');
 var SelectPrimitive = require('@radix-ui/react-select');
 
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+
 function _interopNamespace(e) {
   if (e && e.__esModule) return e;
   var n = Object.create(null);
@@ -43,6 +46,7 @@ function _interopNamespace(e) {
   return Object.freeze(n);
 }
 
+var isEqual__default = /*#__PURE__*/_interopDefault(isEqual);
 var SeparatorPrimitive__namespace = /*#__PURE__*/_interopNamespace(SeparatorPrimitive);
 var DialogPrimitive__namespace = /*#__PURE__*/_interopNamespace(DialogPrimitive);
 var LabelPrimitive__namespace = /*#__PURE__*/_interopNamespace(LabelPrimitive);
@@ -54,18 +58,11 @@ var SelectPrimitive__namespace = /*#__PURE__*/_interopNamespace(SelectPrimitive)
 
 function Table({ className, ...props }) {
   return /* @__PURE__ */ jsxRuntime.jsx(
-    "div",
+    "table",
     {
-      "data-slot": "table-container",
-      className: "relative w-full overflow-x-auto",
-      children: /* @__PURE__ */ jsxRuntime.jsx(
-        "table",
-        {
-          "data-slot": "table",
-          className: chunkQSC4UIVT_js.cn("w-full caption-bottom text-sm", className),
-          ...props
-        }
-      )
+      "data-slot": "table",
+      className: chunkQSC4UIVT_js.cn("w-full caption-bottom text-sm", className),
+      ...props
     }
   );
 }
@@ -163,7 +160,9 @@ var PivotTableComponent = ({
   ...props
 }) => {
   const parentRef = react.useRef(null);
-  const [expanded, setExpanded] = react.useState(true);
+  const [expanded, setExpanded] = react.useState(
+    () => config.options.expandedByDefault ? true : {}
+  );
   const columns = react.useMemo(() => {
     const cols = [];
     if (config.rowFields.length === 0 && config.columnFields.length === 0) {
@@ -299,8 +298,8 @@ var PivotTableComponent = ({
       for (const combination of columnCombinations) {
         const groupLabel = combination.join(" - ");
         const groupColumns = config.valueFields.map((valueField) => ({
-          id: `pivot_${chunk3V676C77_js.generateColumnKey(combination, valueField.displayName || valueField.field)}`,
-          accessorKey: chunk3V676C77_js.generateColumnKey(combination, valueField.displayName || valueField.field),
+          id: `pivot_${chunkNCGJ3B7T_js.generateColumnKey(combination, valueField.displayName || valueField.field)}`,
+          accessorKey: chunkNCGJ3B7T_js.generateColumnKey(combination, valueField.displayName || valueField.field),
           header: () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-right", children: valueField.displayName || formatFieldName(valueField.field) }),
           cell: ({ getValue, row }) => {
             const value = getValue();
@@ -372,10 +371,12 @@ var PivotTableComponent = ({
     getCoreRowModel: reactTable.getCoreRowModel(),
     getExpandedRowModel: reactTable.getExpandedRowModel()
   });
+  const getScrollElement = react.useCallback(() => parentRef.current, []);
+  const estimateSize = react.useCallback(() => 35, []);
   const rowVirtualizer = reactVirtual.useVirtualizer({
     count: table.getRowModel().rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 35,
+    getScrollElement,
+    estimateSize,
     overscan: 10
   });
   const virtualRows = rowVirtualizer.getVirtualItems();
@@ -390,7 +391,7 @@ var PivotTableComponent = ({
         className: "overflow-auto border rounded-lg",
         style: { height: "600px" },
         children: /* @__PURE__ */ jsxRuntime.jsxs(Table, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(TableHeader, { className: "sticky top-0", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsxRuntime.jsx(TableRow, { children: headerGroup.headers.map((header, headerIndex) => {
+          /* @__PURE__ */ jsxRuntime.jsx(TableHeader, { className: "sticky top-0 z-30", children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsxRuntime.jsx(TableRow, { children: headerGroup.headers.map((header, headerIndex) => {
             const isFirstColumn = header.column.columnDef.meta?.isFirstColumn || headerIndex === 0;
             return /* @__PURE__ */ jsxRuntime.jsx(
               TableHead,
@@ -398,8 +399,9 @@ var PivotTableComponent = ({
                 colSpan: header.colSpan,
                 style: { width: header.getSize() },
                 className: chunkQSC4UIVT_js.cn(
-                  "bg-muted/40 border-b-2 font-semibold",
-                  isFirstColumn ? "sticky left-0 z-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]" : "z-10"
+                  // iOS 26 Liquid Glass - multi-layer effect with specular highlights
+                  "font-semibold",
+                  isFirstColumn ? "sticky left-0 z-50 liquid-glass-intersection" : "z-10 liquid-glass-header"
                 ),
                 children: header.isPlaceholder ? null : reactTable.flexRender(
                   header.column.columnDef.header,
@@ -449,11 +451,12 @@ var PivotTableComponent = ({
                       {
                         style: { width: cell.column.getSize() },
                         className: chunkQSC4UIVT_js.cn(
-                          isFirstCol && "sticky left-0 z-20 bg-background shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                          isFirstCol && isGrandTotal && "!bg-accent",
-                          isFirstCol && isSubtotal && "!bg-muted/30",
-                          isFirstCol && isParent && level === 0 && !isGrandTotal && !isSubtotal && "!bg-muted/20",
-                          isFirstCol && isParent && level > 0 && !isGrandTotal && !isSubtotal && "!bg-muted/15"
+                          // iOS 26 Liquid Glass for sticky first column
+                          isFirstCol && "sticky left-0 z-20",
+                          // Apply appropriate liquid glass variant based on row type
+                          isFirstCol && !isGrandTotal && !isSubtotal && !isParent && "liquid-glass-cell",
+                          isFirstCol && (isGrandTotal || isSubtotal) && "liquid-glass-cell-accent",
+                          isFirstCol && isParent && !isGrandTotal && !isSubtotal && "liquid-glass-cell-muted"
                         ),
                         children: reactTable.flexRender(cell.column.columnDef.cell, cell.getContext())
                       },
@@ -491,7 +494,7 @@ var PivotTableComponent = ({
   ] });
 };
 var PivotTable = react.memo(PivotTableComponent, (prevProps, nextProps) => {
-  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && prevProps.className === nextProps.className && prevProps.style === nextProps.style && JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config);
+  return prevProps.data === nextProps.data && prevProps.metadata === nextProps.metadata && prevProps.className === nextProps.className && prevProps.style === nextProps.style && isEqual__default.default(prevProps.config, nextProps.config);
 });
 PivotTable.displayName = "PivotTable";
 function generateCombinations(fields, uniqueValues) {
@@ -865,13 +868,13 @@ var DropZoneComponent = ({
             onRemove: () => onFieldRemove(field),
             onReorder: onFieldReorder
           },
-          `${field}-${index}`
+          field
         )) }) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground text-center", children: "Drag fields here" })
       }
     )
   ] });
 };
-var ReorderableField = ({
+var ReorderableFieldComponent = ({
   field,
   index,
   fieldType,
@@ -934,6 +937,7 @@ var ReorderableField = ({
     closestEdge$1 === "right" && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "absolute right-0 top-0 bottom-0 w-0.5 bg-primary rounded-full" })
   ] });
 };
+var ReorderableField = react.memo(ReorderableFieldComponent);
 var DropZone = react.memo(DropZoneComponent);
 function PivotPanel({
   config,
@@ -1106,6 +1110,14 @@ function PivotPanel({
       }
     });
   }, [handleReturnToAvailable]);
+  const handleRemoveRowField = react.useCallback(
+    (field) => handleRemoveField(field, "rows"),
+    [handleRemoveField]
+  );
+  const handleRemoveColumnField = react.useCallback(
+    (field) => handleRemoveField(field, "columns"),
+    [handleRemoveField]
+  );
   const handleReset = react.useCallback(() => {
     onConfigChange(defaultConfig);
     if (debounceTimeoutRef.current) {
@@ -1161,7 +1173,7 @@ function PivotPanel({
           description: "Fields to group by (rows)",
           fields: config.rowFields,
           onFieldAdd: handleAddRowField,
-          onFieldRemove: (field) => handleRemoveField(field, "rows"),
+          onFieldRemove: handleRemoveRowField,
           onFieldReorder: handleReorderRowFields,
           zone: "rows",
           availableFields
@@ -1175,7 +1187,7 @@ function PivotPanel({
           description: "Fields to pivot (columns)",
           fields: config.columnFields,
           onFieldAdd: handleAddColumnField,
-          onFieldRemove: (field) => handleRemoveField(field, "columns"),
+          onFieldRemove: handleRemoveColumnField,
           onFieldReorder: handleReorderColumnFields,
           zone: "columns",
           availableFields
@@ -1382,10 +1394,21 @@ function ExportDialog({
   const [open, setOpen] = react.useState(false);
   const [format, setFormat] = react.useState("csv");
   const [isExporting, setIsExporting] = react.useState(false);
+  const isMountedRef = react.useRef(true);
+  react.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const handleExport = async () => {
     setIsExporting(true);
+    let url = null;
     try {
       const result = await chunk6M575PJF_js.exportPivotData(data, format);
+      if (!isMountedRef.current) {
+        return;
+      }
       let blob;
       let downloadFilename;
       if (format === "csv") {
@@ -1398,20 +1421,28 @@ function ExportDialog({
         blob = new Blob([result], { type: "application/json" });
         downloadFilename = `${filename}-${Date.now()}.json`;
       }
-      const url = URL.createObjectURL(blob);
+      url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = downloadFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setOpen(false);
+      if (isMountedRef.current) {
+        setOpen(false);
+      }
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Export failed. Please try again.");
+      if (isMountedRef.current) {
+        alert("Export failed. Please try again.");
+      }
     } finally {
-      setIsExporting(false);
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+      if (isMountedRef.current) {
+        setIsExporting(false);
+      }
     }
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(Dialog, { open, onOpenChange: setOpen, children: [
@@ -1460,6 +1491,37 @@ function ExportDialog({
     ] })
   ] });
 }
+
+// src/lib/pivot/hash.ts
+function djb2Hash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) + hash ^ str.charCodeAt(i);
+  }
+  return hash >>> 0;
+}
+function hashPivotConfig(config) {
+  const parts = [
+    // Row fields in order
+    "r:" + config.rowFields.join(","),
+    // Column fields in order
+    "c:" + config.columnFields.join(","),
+    // Value fields - field:aggregation:displayName
+    "v:" + config.valueFields.map((vf) => `${vf.field}:${vf.aggregation}:${vf.displayName || ""}`).join("|"),
+    // Options that affect output
+    "o:" + [
+      config.options.showRowTotals ? "1" : "0",
+      config.options.showColumnTotals ? "1" : "0",
+      config.options.showGrandTotal ? "1" : "0",
+      config.options.expandedByDefault ? "1" : "0"
+    ].join("")
+  ];
+  if (config.filters && Object.keys(config.filters).length > 0) {
+    parts.push("f:" + JSON.stringify(config.filters));
+  }
+  const hashInput = parts.join("|");
+  return djb2Hash(hashInput).toString(36);
+}
 function ClientPivotWrapper({
   rawData,
   initialConfig,
@@ -1474,17 +1536,17 @@ function ClientPivotWrapper({
   const [config, setConfig] = react.useState(initialConfig);
   const transformCache = react.useRef(/* @__PURE__ */ new Map());
   const pivotResult = react.useMemo(() => {
-    const configHash = JSON.stringify(config);
+    const configHash = hashPivotConfig(config);
     if (transformCache.current.has(configHash)) {
       const cached = transformCache.current.get(configHash);
       return cached.result;
     }
-    const result = chunk3V676C77_js.transformToPivot(rawData, config);
+    const result = chunkNCGJ3B7T_js.transformToPivot(rawData, config);
     transformCache.current.set(configHash, {
       result,
       timestamp: Date.now()
     });
-    if (transformCache.current.size > 10) {
+    if (transformCache.current.size > 5) {
       let oldestKey = "";
       let oldestTime = Infinity;
       for (const [key, value] of transformCache.current.entries()) {
@@ -1829,91 +1891,91 @@ Object.defineProperty(exports, "cn", {
 });
 Object.defineProperty(exports, "AggregationFunctionSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.AggregationFunctionSchema; }
+  get: function () { return chunkNCGJ3B7T_js.AggregationFunctionSchema; }
 });
 Object.defineProperty(exports, "ExportConfigSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.ExportConfigSchema; }
+  get: function () { return chunkNCGJ3B7T_js.ExportConfigSchema; }
 });
 Object.defineProperty(exports, "ExportFormatSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.ExportFormatSchema; }
+  get: function () { return chunkNCGJ3B7T_js.ExportFormatSchema; }
 });
 Object.defineProperty(exports, "PivotConfigSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.PivotConfigSchema; }
+  get: function () { return chunkNCGJ3B7T_js.PivotConfigSchema; }
 });
 Object.defineProperty(exports, "PivotMetadataSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.PivotMetadataSchema; }
+  get: function () { return chunkNCGJ3B7T_js.PivotMetadataSchema; }
 });
 Object.defineProperty(exports, "PivotResultSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.PivotResultSchema; }
+  get: function () { return chunkNCGJ3B7T_js.PivotResultSchema; }
 });
 Object.defineProperty(exports, "ValueFieldConfigSchema", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.ValueFieldConfigSchema; }
+  get: function () { return chunkNCGJ3B7T_js.ValueFieldConfigSchema; }
 });
 Object.defineProperty(exports, "aggregate", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.aggregate; }
+  get: function () { return chunkNCGJ3B7T_js.aggregate; }
 });
 Object.defineProperty(exports, "aggregationFunctions", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.aggregationFunctions; }
+  get: function () { return chunkNCGJ3B7T_js.aggregationFunctions; }
 });
 Object.defineProperty(exports, "avg", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.avg; }
+  get: function () { return chunkNCGJ3B7T_js.avg; }
 });
 Object.defineProperty(exports, "count", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.count; }
+  get: function () { return chunkNCGJ3B7T_js.count; }
 });
 Object.defineProperty(exports, "first", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.first; }
+  get: function () { return chunkNCGJ3B7T_js.first; }
 });
 Object.defineProperty(exports, "formatAggregationName", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.formatAggregationName; }
+  get: function () { return chunkNCGJ3B7T_js.formatAggregationName; }
 });
 Object.defineProperty(exports, "generateColumnKey", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.generateColumnKey; }
+  get: function () { return chunkNCGJ3B7T_js.generateColumnKey; }
 });
 Object.defineProperty(exports, "getAggregationFunction", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.getAggregationFunction; }
+  get: function () { return chunkNCGJ3B7T_js.getAggregationFunction; }
 });
 Object.defineProperty(exports, "last", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.last; }
+  get: function () { return chunkNCGJ3B7T_js.last; }
 });
 Object.defineProperty(exports, "max", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.max; }
+  get: function () { return chunkNCGJ3B7T_js.max; }
 });
 Object.defineProperty(exports, "median", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.median; }
+  get: function () { return chunkNCGJ3B7T_js.median; }
 });
 Object.defineProperty(exports, "min", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.min; }
+  get: function () { return chunkNCGJ3B7T_js.min; }
 });
 Object.defineProperty(exports, "parseColumnKey", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.parseColumnKey; }
+  get: function () { return chunkNCGJ3B7T_js.parseColumnKey; }
 });
 Object.defineProperty(exports, "sum", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.sum; }
+  get: function () { return chunkNCGJ3B7T_js.sum; }
 });
 Object.defineProperty(exports, "transformToPivot", {
   enumerable: true,
-  get: function () { return chunk3V676C77_js.transformToPivot; }
+  get: function () { return chunkNCGJ3B7T_js.transformToPivot; }
 });
 exports.Badge = Badge;
 exports.Button = Button;

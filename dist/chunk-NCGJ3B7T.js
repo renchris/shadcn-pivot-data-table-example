@@ -380,7 +380,8 @@ function addColumnTotals(data, config, uniqueColumnValues) {
   if (config.options.showRowTotals) {
     columnTotalRow["__TOTAL__"] = grandTotal;
   }
-  return [...data, columnTotalRow];
+  data.push(columnTotalRow);
+  return data;
 }
 function addGrandTotal(data, config) {
   if (data.length === 0) return data;
@@ -401,7 +402,8 @@ function addGrandTotal(data, config) {
       grandTotal[key] = values.reduce((sum2, val) => sum2 + Number(val), 0);
     }
   }
-  return [...data, grandTotal];
+  data.push(grandTotal);
+  return data;
 }
 function calculateColumnCount(uniqueColumnValues, valueFields) {
   if (Object.keys(uniqueColumnValues).length === 0) {
@@ -499,5 +501,5 @@ exports.min = min;
 exports.parseColumnKey = parseColumnKey;
 exports.sum = sum;
 exports.transformToPivot = transformToPivot;
-//# sourceMappingURL=chunk-3V676C77.js.map
-//# sourceMappingURL=chunk-3V676C77.js.map
+//# sourceMappingURL=chunk-NCGJ3B7T.js.map
+//# sourceMappingURL=chunk-NCGJ3B7T.js.map
