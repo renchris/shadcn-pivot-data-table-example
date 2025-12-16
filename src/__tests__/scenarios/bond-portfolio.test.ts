@@ -240,7 +240,7 @@ describe('Bond Portfolio Analysis - Pivot Table', () => {
       expect(maturity2to5Row?.['BB+__Count']).toBe(1) // BOND011
 
       // Row total should be 4
-      expect(maturity2to5Row?.['__TOTAL__']).toBe(4)
+      expect(maturity2to5Row?.['__total_Count']).toBe(4)
     })
 
     test('should count bonds correctly in 5-10Y maturity bucket', () => {
@@ -279,7 +279,7 @@ describe('Bond Portfolio Analysis - Pivot Table', () => {
       expect(maturity5to10Row?.['BB__Count']).toBe(1) // BOND012
 
       // Row total should be 7
-      expect(maturity5to10Row?.['__TOTAL__']).toBe(7)
+      expect(maturity5to10Row?.['__total_Count']).toBe(7)
     })
 
     test('should calculate column totals for each rating', () => {
@@ -313,7 +313,7 @@ describe('Bond Portfolio Analysis - Pivot Table', () => {
       expect(columnTotalRow?.['AAA__Count']).toBe(4)
 
       // Grand total should be 12 bonds
-      expect(columnTotalRow?.['__TOTAL__']).toBe(12)
+      expect(columnTotalRow?.['__total_Count']).toBe(12)
     })
   })
 

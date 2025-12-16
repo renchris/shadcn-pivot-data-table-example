@@ -251,7 +251,7 @@ describe('Trading Desk P&L Analysis - Pivot Table', () => {
       expect(us10yRow?.['David Lee__Volume']).toBe(8000000)
 
       // Row total should be 18M
-      expect(us10yRow?.['__TOTAL__']).toBe(18000000)
+      expect(us10yRow?.['__total_Volume']).toBe(18000000)
     })
 
     test('should handle single-trader instruments correctly', () => {
@@ -279,7 +279,7 @@ describe('Trading Desk P&L Analysis - Pivot Table', () => {
       const aaplRow = result.data.find((row) => row.instrument === 'AAPL')
       expect(aaplRow).toBeDefined()
       expect(aaplRow?.['Alice Chen__Volume']).toBe(1000)
-      expect(aaplRow?.['__TOTAL__']).toBe(1000)
+      expect(aaplRow?.['__total_Volume']).toBe(1000)
 
       // All other trader columns should be undefined or 0
       expect(aaplRow?.['Bob Smith__Volume']).toBeUndefined()

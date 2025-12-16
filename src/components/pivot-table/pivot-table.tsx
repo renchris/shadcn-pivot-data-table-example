@@ -203,7 +203,7 @@ const PivotTableComponent = ({
       // No pivot columns - simple value columns
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `value_${valueField.field}`,
+          id: `value_${valueField.field}_${valueField.aggregation}`,
           accessorKey: valueField.displayName || valueField.field,
           header: () => (
             <div className="text-right">
@@ -285,8 +285,8 @@ const PivotTableComponent = ({
     if (config.options.showRowTotals && config.columnFields.length > 0) {
       for (const valueField of config.valueFields) {
         cols.push({
-          id: `__total_${valueField.field}`,
-          accessorKey: `__total_${valueField.field}`,
+          id: `__total_${valueField.field}_${valueField.aggregation}`,
+          accessorKey: `__total_${valueField.displayName || valueField.field}`,
           header: () => (
             <div className="text-right">
               {`Total ${valueField.displayName || formatFieldName(valueField.field)}`}

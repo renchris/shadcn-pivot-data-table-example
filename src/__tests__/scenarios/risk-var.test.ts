@@ -535,7 +535,7 @@ describe('Risk Management (VaR) - Pivot Table', () => {
       expect(equitiesRow?.['Asia__VaR 95%']).toBe(770000)
 
       // Row total
-      expect(equitiesRow?.['__TOTAL__']).toBe(3225000)
+      expect(equitiesRow?.['__total_VaR 95%']).toBe(3225000)
     })
 
     test('should show Fixed Income has no Asia exposure', () => {
@@ -573,7 +573,7 @@ describe('Risk Management (VaR) - Pivot Table', () => {
       expect(fixedIncomeRow?.['Asia__VaR 95%']).toBeUndefined()
 
       // Row total
-      expect(fixedIncomeRow?.['__TOTAL__']).toBe(1015000)
+      expect(fixedIncomeRow?.['__total_VaR 95%']).toBe(1015000)
     })
   })
 

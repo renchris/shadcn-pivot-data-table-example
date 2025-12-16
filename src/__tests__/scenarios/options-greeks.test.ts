@@ -344,7 +344,7 @@ describe('Options Portfolio Greeks - Pivot Table', () => {
       expect(coveredCallRow).toBeDefined()
       expect(coveredCallRow?.['Call__Contracts']).toBe(405)
       expect(coveredCallRow?.['Put__Contracts']).toBeUndefined()
-      expect(coveredCallRow?.['__TOTAL__']).toBe(405)
+      expect(coveredCallRow?.['__total_Contracts']).toBe(405)
     })
 
     test('should aggregate Protective Put contracts correctly (all Puts)', () => {
@@ -375,7 +375,7 @@ describe('Options Portfolio Greeks - Pivot Table', () => {
       expect(protectivePutRow).toBeDefined()
       expect(protectivePutRow?.['Put__Contracts']).toBe(530)
       expect(protectivePutRow?.['Call__Contracts']).toBeUndefined()
-      expect(protectivePutRow?.['__TOTAL__']).toBe(530)
+      expect(protectivePutRow?.['__total_Contracts']).toBe(530)
     })
 
     test('should aggregate Straddle contracts correctly (equal Calls and Puts)', () => {
@@ -404,7 +404,7 @@ describe('Options Portfolio Greeks - Pivot Table', () => {
       expect(straddleRow).toBeDefined()
       expect(straddleRow?.['Call__Contracts']).toBe(120)
       expect(straddleRow?.['Put__Contracts']).toBe(120)
-      expect(straddleRow?.['__TOTAL__']).toBe(240)
+      expect(straddleRow?.['__total_Contracts']).toBe(240)
     })
   })
 

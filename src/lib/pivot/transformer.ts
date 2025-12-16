@@ -457,6 +457,8 @@ function addRowTotals(
     for (const valueField of config.valueFields) {
       const values: any[] = []
       const displayName = valueField.displayName || valueField.field
+      // Use unique key per value field to avoid overwriting when multiple value fields exist
+      const totalKey = `__total_${displayName}`
 
       for (const combination of combinations) {
         const columnKey = [...combination, displayName].join('__')
@@ -469,27 +471,27 @@ function addRowTotals(
 
       if (aggregateFn === 'count' || aggregateFn === 'sum') {
         // For count and sum, add up all the values
-        rowWithTotal['__TOTAL__'] = values.reduce((sum, val) => sum + Number(val || 0), 0)
+        rowWithTotal[totalKey] = values.reduce((sum, val) => sum + Number(val || 0), 0)
       } else if (aggregateFn === 'avg') {
         const sum = values.reduce((sum, val) => sum + Number(val || 0), 0)
-        rowWithTotal['__TOTAL__'] = values.length > 0 ? sum / values.length : 0
+        rowWithTotal[totalKey] = values.length > 0 ? sum / values.length : 0
       } else if (aggregateFn === 'min') {
-        rowWithTotal['__TOTAL__'] = values.length > 0 ? Math.min(...values.map(Number)) : 0
+        rowWithTotal[totalKey] = values.length > 0 ? Math.min(...values.map(Number)) : 0
       } else if (aggregateFn === 'max') {
-        rowWithTotal['__TOTAL__'] = values.length > 0 ? Math.max(...values.map(Number)) : 0
+        rowWithTotal[totalKey] = values.length > 0 ? Math.max(...values.map(Number)) : 0
       } else if (aggregateFn === 'first') {
-        rowWithTotal['__TOTAL__'] = values.length > 0 ? values[0] : undefined
+        rowWithTotal[totalKey] = values.length > 0 ? values[0] : undefined
       } else if (aggregateFn === 'last') {
-        rowWithTotal['__TOTAL__'] = values.length > 0 ? values[values.length - 1] : undefined
+        rowWithTotal[totalKey] = values.length > 0 ? values[values.length - 1] : undefined
       } else if (aggregateFn === 'median') {
         if (values.length > 0) {
           const sorted = [...values].map(Number).sort((a, b) => a - b)
           const mid = Math.floor(sorted.length / 2)
-          rowWithTotal['__TOTAL__'] = sorted.length % 2 === 0
+          rowWithTotal[totalKey] = sorted.length % 2 === 0
             ? (sorted[mid - 1] + sorted[mid]) / 2
             : sorted[mid]
         } else {
-          rowWithTotal['__TOTAL__'] = 0
+          rowWithTotal[totalKey] = 0
         }
       }
     }
@@ -525,7 +527,7 @@ function addColumnTotals(
 
   // Calculate column totals for all value columns
   const firstRow = data[0]
-  let grandTotal = 0
+  const grandTotal = 0
 
   for (const key of Object.keys(firstRow)) {
     if (key.startsWith('__')) continue
@@ -539,17 +541,24 @@ function addColumnTotals(
     if (values.length > 0) {
       const total = values.reduce((sum, val) => sum + Number(val), 0)
       columnTotalRow[key] = total
-
-      // Add to grand total if this is a regular column (not a __TOTAL__ key)
-      if (key !== '__TOTAL__') {
-        grandTotal += total
-      }
     }
   }
 
-  // Add grand total column if there are pivot columns with row totals enabled
+  // Add per-value-field totals if row totals are enabled
   if (config.options.showRowTotals) {
-    columnTotalRow['__TOTAL__'] = grandTotal
+    for (const valueField of config.valueFields) {
+      const displayName = valueField.displayName || valueField.field
+      const totalKey = `__total_${displayName}`
+      // Sum up the row totals for this value field
+      const values = data
+        .filter(row => !row.__isGrandTotal && !row.__isColumnTotal && !row.__isSubtotal)
+        .map(row => row[totalKey])
+        .filter(val => val !== null && val !== undefined && !isNaN(Number(val)))
+
+      if (values.length > 0) {
+        columnTotalRow[totalKey] = values.reduce((sum, val) => sum + Number(val), 0)
+      }
+    }
   }
 
   // Push instead of spread to avoid full array copy (~100MB saved for large datasets)

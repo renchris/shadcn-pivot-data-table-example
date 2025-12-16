@@ -423,7 +423,7 @@ describe('Market Data Analysis - Pivot Table', () => {
       expect(bucket0930?.['TSLA__Volume']).toBe(8500000)
 
       // Row total should be 20.2M
-      expect(bucket0930?.['__TOTAL__']).toBe(20200000)
+      expect(bucket0930?.['__total_Volume']).toBe(20200000)
     })
 
     test('should calculate column totals for each symbol', () => {
@@ -461,7 +461,7 @@ describe('Market Data Analysis - Pivot Table', () => {
       expect(columnTotalRow?.['TSLA__Volume']).toBe(28700000)
 
       // Grand total should be 67.6M
-      expect(columnTotalRow?.['__TOTAL__']).toBe(67600000)
+      expect(columnTotalRow?.['__total_Volume']).toBe(67600000)
     })
 
     test('should show decreasing volume pattern as morning progresses', () => {
