@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { fetchRawData, getAvailableFields } from '@/app/actions/pivot'
 import { PivotConfigSchema, type PivotConfig } from '@/lib/pivot/schemas'
 import { ScenarioSelector } from '@/components/pivot-table/scenario-selector'
-import { ClientPivotWrapper } from '@/components/pivot-table/client-pivot-wrapper'
+import { DemoPivotWrapper } from './demo-pivot-wrapper'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getScenario } from '@/lib/pivot/scenarios'
@@ -73,15 +73,18 @@ async function ClientPivotDataFetcher({ config, scenario }: { config: PivotConfi
     getAvailableFields(scenario),
   ])
 
-  // Get scenario's default config for reset functionality
+  // Get scenario's full config including optimalConfigs for guided setup
   const scenarioConfig = getScenario(scenario)
 
   return (
-    <ClientPivotWrapper
+    <DemoPivotWrapper
       rawData={rawData}
       initialConfig={config}
       defaultConfig={scenarioConfig.defaultConfig}
       availableFields={availableFields}
+      optimalConfigs={scenarioConfig.optimalConfigs}
+      businessValue={scenarioConfig.businessValue}
+      scenarioId={scenarioConfig.id}
     />
   )
 }

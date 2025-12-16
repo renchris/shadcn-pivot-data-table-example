@@ -6,6 +6,19 @@
 
 import type { PivotConfig } from './schemas'
 
+/**
+ * Optimal configuration option for guided setup
+ * Each scenario can have multiple recommended configurations
+ */
+export interface OptimalConfigOption {
+  id: string                    // e.g., 'hierarchical', 'heatmap'
+  label: string                 // e.g., 'Hierarchical Analysis', 'Volume Heatmap'
+  rowFields: string[]
+  columnFields: string[]
+  description: string           // What this config reveals
+  achievementMessage: string    // Shown when user matches this config
+}
+
 export interface ScenarioConfig {
   id: string
   title: string
@@ -13,6 +26,7 @@ export interface ScenarioConfig {
   category: 'finance' | 'general'
   businessValue?: string // Business value/use case for this configuration
   defaultConfig: PivotConfig
+  optimalConfigs: OptimalConfigOption[] // Recommended configurations for guided setup
 }
 
 export const scenarios: Record<string, ScenarioConfig> = {
@@ -49,6 +63,24 @@ export const scenarios: Record<string, ScenarioConfig> = {
         showGrandTotal: false,
       },
     },
+    optimalConfigs: [
+      {
+        id: 'hierarchical',
+        label: 'Hierarchical Stock Analysis',
+        rowFields: ['symbol', 'timeBucket'],
+        columnFields: [],
+        description: 'OHLC patterns by time period within each stock',
+        achievementMessage: 'Identify optimal execution times to minimize market impact. AAPL has consistent 600K volume per period (stable liquidity).',
+      },
+      {
+        id: 'heatmap',
+        label: 'Volume Heatmap',
+        rowFields: ['timeBucket'],
+        columnFields: ['symbol'],
+        description: 'Compare liquidity across all stocks side-by-side',
+        achievementMessage: 'TSLA highest volume (most liquid) - best for large orders. GOOGL lowest volume (harder to execute without moving market).',
+      },
+    ],
   },
 
   'trading-pnl': {
@@ -84,6 +116,24 @@ export const scenarios: Record<string, ScenarioConfig> = {
         showGrandTotal: false,
       },
     },
+    optimalConfigs: [
+      {
+        id: 'desk-analysis',
+        label: 'Desk Performance Analysis',
+        rowFields: ['desk', 'trader'],
+        columnFields: [],
+        description: 'P&L breakdown by desk and trader hierarchy',
+        achievementMessage: 'Top performer: Carol Wong (Fixed Income) - $22.5K avg. Action: Increase position limits for proven efficiency.',
+      },
+      {
+        id: 'concentration',
+        label: 'Instrument Concentration Risk',
+        rowFields: ['instrument'],
+        columnFields: ['trader'],
+        description: 'Reveals which traders trade which instruments',
+        achievementMessage: 'EUR/USD concentration risk exposed (33% of FX desk). Action: Implement position limits per instrument per desk.',
+      },
+    ],
   },
 
   'bond-portfolio': {
@@ -119,6 +169,24 @@ export const scenarios: Record<string, ScenarioConfig> = {
         showGrandTotal: false,
       },
     },
+    optimalConfigs: [
+      {
+        id: 'allocation',
+        label: 'Portfolio Allocation',
+        rowFields: ['portfolio', 'sector'],
+        columnFields: [],
+        description: 'Sector allocation within each portfolio',
+        achievementMessage: 'Sector allocation matches strategy. Conservative: 61% Government, Aggressive: 100% Corporate (maximum risk/return).',
+      },
+      {
+        id: 'ladder-matrix',
+        label: 'Maturity × Rating Ladder',
+        rowFields: ['maturityBucket'],
+        columnFields: ['rating'],
+        description: 'Critical for rebalancing - shows duration/credit distribution',
+        achievementMessage: 'Gap identified: No AAA/AA+ bonds in 10Y+ bucket. Duration/credit mismatch - sell BB-rated 10Y+ bonds, buy AAA 10Y+.',
+      },
+    ],
   },
 
   'options-greeks': {
@@ -159,6 +227,24 @@ export const scenarios: Record<string, ScenarioConfig> = {
         showGrandTotal: false,
       },
     },
+    optimalConfigs: [
+      {
+        id: 'single-name',
+        label: 'Single-Name Risk Concentration',
+        rowFields: ['underlying'],
+        columnFields: [],
+        description: 'Greek exposure per underlying stock',
+        achievementMessage: 'TSLA concentration risk: +300 delta (61% of directional risk), 42.5% IV. Action: Buy SPY puts to hedge, sell TSLA calls.',
+      },
+      {
+        id: 'calendar-risk',
+        label: 'Strategy × Expiry Calendar',
+        rowFields: ['strategy'],
+        columnFields: ['expiryBucket'],
+        description: 'Shows time-based risk by strategy',
+        achievementMessage: 'Front-month heavy: 145 contracts expiring in 1 month (38.7%). Roll Protective Puts to maintain downside protection.',
+      },
+    ],
   },
 
   'risk-var': {
@@ -194,6 +280,24 @@ export const scenarios: Record<string, ScenarioConfig> = {
         showGrandTotal: false,
       },
     },
+    optimalConfigs: [
+      {
+        id: 'breakdown',
+        label: 'Asset Class Risk Breakdown',
+        rowFields: ['assetClass', 'region'],
+        columnFields: [],
+        description: 'VaR by asset class and region hierarchy',
+        achievementMessage: 'Americas concentration: 49.3% of total risk. Equities Americas = 25.8% VaR - single largest risk bucket needs rebalancing.',
+      },
+      {
+        id: 'geo-heatmap',
+        label: 'Geographic Risk Heatmap',
+        rowFields: ['assetClass'],
+        columnFields: ['region'],
+        description: 'Risk heatmap reveals concentration hotspots',
+        achievementMessage: 'Americas Equities hotspot identified ($1.58M VaR). Increase Asia allocation for diversification benefit.',
+      },
+    ],
   },
 }
 
