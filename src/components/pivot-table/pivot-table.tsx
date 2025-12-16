@@ -27,7 +27,7 @@ import { generateColumnKey } from '../../lib/pivot/transformer'
 /**
  * Props for the PivotTable component
  */
-interface PivotTableProps {
+interface PivotTableProps extends React.ComponentProps<"div"> {
   /** Transformed pivot data rows */
   data: PivotRow[]
   /** Pivot configuration used for the transformation */
@@ -54,7 +54,14 @@ interface PivotTableProps {
  * <PivotTable data={result.data} config={result.config} metadata={result.metadata} />
  * ```
  */
-const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
+const PivotTableComponent = ({
+  data,
+  config,
+  metadata,
+  className,
+  style,
+  ...props
+}: PivotTableProps) => {
   const parentRef = useRef<HTMLDivElement>(null)
 
   // Initialize expanded state - all rows expanded by default
@@ -335,7 +342,7 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
       : 0
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", className)} style={style} {...props}>
       {/* Table container with virtualization */}
       <div
         ref={parentRef}
@@ -462,10 +469,12 @@ const PivotTableComponent = ({ data, config, metadata }: PivotTableProps) => {
 
 // Memoize component to prevent unnecessary re-renders
 export const PivotTable = memo(PivotTableComponent, (prevProps, nextProps) => {
-  // Deep equality check for data and config
+  // Deep equality check for data, config, and styling props
   return (
     prevProps.data === nextProps.data &&
     prevProps.metadata === nextProps.metadata &&
+    prevProps.className === nextProps.className &&
+    prevProps.style === nextProps.style &&
     JSON.stringify(prevProps.config) === JSON.stringify(nextProps.config)
   )
 })

@@ -7,12 +7,23 @@ import { PivotPanel } from './pivot-panel'
 import { ExportDialog } from './export-dialog'
 import { transformToPivot } from '../../lib/pivot/transformer'
 import type { PivotConfig, PivotResult } from '../../lib/pivot/schemas'
+import { cn } from '../../lib/utils'
 
 interface ClientPivotWrapperProps {
   rawData: any[]
   initialConfig: PivotConfig
   defaultConfig: PivotConfig // Scenario's default config for reset functionality
   availableFields: Array<{ name: string; type: string }>
+  /** Additional CSS class names for the root container */
+  className?: string
+  /** Inline styles for the root container */
+  style?: React.CSSProperties
+  /** Additional CSS class names for the PivotPanel */
+  panelClassName?: string
+  /** Additional CSS class names for the results Card */
+  resultsClassName?: string
+  /** Additional CSS class names for the PivotTable */
+  tableClassName?: string
 }
 
 /**
@@ -24,6 +35,11 @@ export function ClientPivotWrapper({
   initialConfig,
   defaultConfig,
   availableFields,
+  className,
+  style,
+  panelClassName,
+  resultsClassName,
+  tableClassName,
 }: ClientPivotWrapperProps) {
   // Store config in local state for instant updates
   const [config, setConfig] = useState(initialConfig)
@@ -78,17 +94,18 @@ export function ClientPivotWrapper({
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", className)} style={style}>
       {/* Configuration Panel */}
       <PivotPanel
         config={config}
         defaultConfig={defaultConfig}
         availableFields={availableFields}
         onConfigChange={handleConfigChange}
+        className={panelClassName}
       />
 
       {/* Results Table */}
-      <Card>
+      <Card className={resultsClassName}>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
@@ -112,6 +129,7 @@ export function ClientPivotWrapper({
             data={pivotResult.data}
             config={config}
             metadata={pivotResult.metadata}
+            className={tableClassName}
           />
         </CardContent>
       </Card>

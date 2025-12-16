@@ -16,13 +16,31 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Download, Loader2 } from 'lucide-react'
 import { exportPivotData } from '../../lib/pivot/export'
 import type { ExportFormat } from '../../lib/pivot/schemas'
+import { cn } from '../../lib/utils'
 
 interface ExportDialogProps {
+  /** Pivot data to export */
   data: any[]
+  /** Optional filename (without extension) */
   filename?: string
+  /** Additional CSS class names for the trigger button */
+  className?: string
+  /** Inline styles for the trigger button */
+  style?: React.CSSProperties
+  /** Additional CSS class names for the dialog content */
+  dialogClassName?: string
+  /** Inline styles for the dialog content */
+  dialogStyle?: React.CSSProperties
 }
 
-export function ExportDialog({ data, filename = 'pivot-export' }: ExportDialogProps) {
+export function ExportDialog({
+  data,
+  filename = 'pivot-export',
+  className,
+  style,
+  dialogClassName,
+  dialogStyle
+}: ExportDialogProps) {
   const [open, setOpen] = useState(false)
   const [format, setFormat] = useState<ExportFormat>('csv')
   const [isExporting, setIsExporting] = useState(false)
@@ -69,12 +87,12 @@ export function ExportDialog({ data, filename = 'pivot-export' }: ExportDialogPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className={className} style={style}>
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={cn("sm:max-w-md", dialogClassName)} style={dialogStyle}>
         <DialogHeader>
           <DialogTitle>Export Pivot Table</DialogTitle>
           <DialogDescription>
